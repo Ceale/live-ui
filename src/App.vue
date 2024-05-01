@@ -9,10 +9,22 @@ if (window.location.hash.includes("shadow")) {
     document.documentElement.classList.add("shadow")
 }
 
+const getCurrentTime = () => {
+    const now = new Date();
+    let hours: number|string = now.getHours();
+    let minutes: number|string = now.getMinutes();
+
+    // 格式化时间
+    if (hours < 10) hours = '0' + hours;
+    if (minutes < 10) minutes = '0' + minutes;
+
+    return hours + ":" + minutes;
+}
+
 const name = ref("")
 const singer = ref("")
-const duration = ref("")
-const progress = ref("")
+const duration = ref<number>(0)
+const progress = ref<number>(0)
 const lyricLineText = ref("")
 
 const cover = ref<string[]>([])
@@ -58,13 +70,9 @@ connect.addEventListener("lyricLineText", (event) => {
     <div id="info">
         <div class="text">
             <p id="description">
-                <TransitionGroup name="text" tag="span" class="name">
-                    <span v-for="str in name" :key="Math.random()">{{ str }}</span>
-                </TransitionGroup>
+                <span class="name">{{ name }}</span>
                 <div id="dot"></div>
-                <TransitionGroup name="text" tag="span" class="author">
-                    <span v-for="str in singer" :key="Math.random()">{{ str }}</span>
-                </TransitionGroup>
+                <span class="author">{{ singer }}</span>
             </p>
         </div>
         <div class="bar">
@@ -73,15 +81,29 @@ connect.addEventListener("lyricLineText", (event) => {
             </div>
         </div>
     </div>
-    <div id="time"></div>
+    <div id="time">
+        <span v-for="str in getCurrentTime()">
+            {{ str }}
+        </span>
+    </div>
 </template>
 
 <style>
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    width: 1280px;
+    height: 115px;
+}
+
 body {
     width: 1280px;
     height: 115px;
     padding: 0 15px;
-    gap: 20px;
+    gap: 25px;
     display: flex;
     align-items: center;
     box-sizing: border-box;
@@ -132,7 +154,7 @@ body {
 }
 
 #info {
-    flex: 1;
+    width: 900px;
     height: 85px;
     display: flex;
     flex-direction: column;
@@ -152,13 +174,18 @@ body {
 }
 
 #description {
-    font-size: 32px;
+    font-size: 36px;
     color: #fff;
     display: flex;
     align-items: center;
     gap: 25px;
-    font-family: 寒蝉圆黑体;
-    font-weight: normal;
+    font-family: 思源黑体;
+    font-weight: 700;
+    overflow-x: auto;
+}
+
+#description span {
+    white-space: nowrap;
 }
 
 #dot {
@@ -176,8 +203,11 @@ body {
     transform: scale(1);
     opacity: 1;
 }
-.text-enter-active, .text-leave-active {
+.text-enter-active, .text-leave-active, .list-move {
     transition: all 400ms ease;
+}
+.text-leave-active {
+    position: absolute;
 }
 
 #progress-bar {
@@ -190,6 +220,22 @@ body {
 #progress-bar .progress {
     height: 100%;
     background-color: #fff;
+}
+
+#time {
+    width: 225px;
+    height: 85px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+#time span {
+    font-size: 72px;
+    color: #fff;
+    font-family: 寒蝉圆黑体;
+    font-weight: 700;
 }
 </style>
 
@@ -225,5 +271,9 @@ html.shadow #dot {
 
 html.shadow #progress-bar {
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+html.shadow #time {
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 </style>
