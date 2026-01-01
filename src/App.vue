@@ -28,7 +28,7 @@ onMounted(() => {
 <template>
     <main>
         <Background />
-        <Music />
+        <!-- <Music /> -->
     </main>
 </template>
 
