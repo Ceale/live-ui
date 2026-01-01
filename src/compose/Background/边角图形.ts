@@ -231,9 +231,12 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
     ctx.fill()
 }
 
+const 周角 = 2 * Math.PI
+const 十分之一度 = 2 * Math.PI / 3600
+
 export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
-    data.shapeTop.rotate = (data.shapeTop.rotate + 5) % 360
-    data.shapeBottom.rotate = (data.shapeBottom.rotate + 5) % 360
+    data.shapeTop.rotate = (data.shapeTop.rotate + 十分之一度) % 周角
+    data.shapeBottom.rotate = (data.shapeBottom.rotate + 十分之一度) % 周角
     const [ width, height ] = getCtxSize(ctx)
     
     // 上方
