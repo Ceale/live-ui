@@ -4,7 +4,7 @@ import { drawBackground as draw背景 } from "./背景"
 import { getCtxSize } from "./util"
 import { draw网格点 } from "./网格点"
 import { draw背景图形, init背景图形 } from "./背景图形"
-import { draw边角图形 } from "./边角图形"
+import { draw边角图形, init边角图形 } from "./边角图形"
 import { draw形状, init形状 } from "./形状"
 
 const canvasRef = useTemplateRef("canvas")
@@ -16,6 +16,7 @@ interface ctxFunc {
 
 const initList: ctxFunc[] = [
     init背景图形,
+    init边角图形,
     init形状
 ]
 
