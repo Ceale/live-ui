@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@ceale/util": "^1.17.0",
-    "vue": "^3.4.21",
+    "vue": "^3.5.26",
     "zepto": "^1.2.0"
   },
   "devDependencies": {
