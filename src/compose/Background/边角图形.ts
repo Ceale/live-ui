@@ -28,9 +28,9 @@ export const randomHarmoniousColors = (): [string, string] => {
 
 enum ShapeType {
     circle,
-    wave,        // 四象限大波浪
+    四叶草,        // 四象限大波浪
     squircle,    // 超圆润矩形
-    flower,      // 8瓣花
+    七角,
     polygon5,    // 圆角五边形
     polygon6,    // 圆角六边形
     polygon8,    // 圆角八边形
@@ -50,6 +50,7 @@ const randomType = () => {
 interface AAA {
     offset: [ number, number ]
     rotate: number
+    rotateSpd: number
     type: ShapeType
     color: string
 }
@@ -67,38 +68,43 @@ let data!: CornerState
 export const init边角图形 = () => {
     const [ c1, c2 ] = randomHarmoniousColors()
     const [ t1, t2 ] = [ randomType(), randomType() ]
+    const [ s1, s2 ] = [ random(0.3, 2), random(0.3, 2) ]
     data = {
         direction: Math.random() > 0.5 ? "↖" : "↗",
         shapeTopLg: {
             offset: [ random(-35, 35), random(-35, 35) ],
             rotate: 0,
+            rotateSpd: s1,
             type: t1,
             color: c1
         },
         shapeTopSm: {
             offset: [ random(-20, 20), random(-20, 20) ],
             rotate: 0,
+            rotateSpd: s1 + random(-0.1, -0.1),
             type: t1,
             color: c1
         },
         shapeBottomLg: {
             offset: [ random(-35, 35), random(-35, 35) ],
             rotate: 0,
+            rotateSpd: s2,
             type: t2,
             color: c2
         },
         shapeBottomSm: {
             offset: [ random(-20, 20), random(-20, 20) ],
             rotate: 0,
+            rotateSpd: s2 + random(-0.1, -0.1),
             type: t2,
             color: c2
         }
     }
     setInterval(() => {
-        data.shapeTopLg.rotate = (data.shapeTopLg.rotate + 十分之一度) % 周角
-        data.shapeTopSm.rotate = (data.shapeTopSm.rotate + 十分之一度) % 周角
-        data.shapeBottomLg.rotate = (data.shapeBottomLg.rotate + 十分之一度) % 周角
-        data.shapeBottomSm.rotate = (data.shapeBottomSm.rotate + 十分之一度) % 周角
+        data.shapeTopLg.rotate = (data.shapeTopLg.rotate + 十分之一度 * data.shapeTopLg.rotateSpd) % 周角
+        data.shapeTopSm.rotate = (data.shapeTopSm.rotate + 十分之一度 * data.shapeTopSm.rotateSpd) % 周角
+        data.shapeBottomLg.rotate = (data.shapeBottomLg.rotate + 十分之一度 * data.shapeBottomLg.rotateSpd) % 周角
+        data.shapeBottomSm.rotate = (data.shapeBottomSm.rotate + 十分之一度 * data.shapeBottomSm.rotateSpd) % 周角
     }, 10)
 }
 
@@ -179,9 +185,9 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
 
         case ShapeType.star5:
             const s5Points = []
-            const s5Inner = size * 0.5
+            const s5Inner = 250
             for(let i=0; i<10; i++) {
-                const rad = i%2===0 ? size : s5Inner
+                const rad = i%2===0 ? 450 : s5Inner
                 const a = i * Math.PI/5 - Math.PI/2
                 s5Points.push({x: rad*Math.cos(a), y: rad*Math.sin(a)})
             }
@@ -198,17 +204,17 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
                     const nextP = s5Points[(i + 1) % len]
                     const nextMidX = (p.x + nextP.x) / 2
                     const nextMidY = (p.y + nextP.y) / 2
-                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, 40)
+                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, 60)
                     ctx.lineTo(nextMidX, nextMidY)
                 }
                 ctx.closePath()
             }
             break
             
-        case ShapeType.flower:
-            const petals = 8
-            const valleyR = size * 0.8
-            const peakR = size * 1.1
+        case ShapeType.七角:
+            const petals = 7
+            const valleyR = size * 1
+            const peakR = size * 1.3
             const step = Math.PI / petals // 22.5度
 
             // 使用三次贝塞尔曲线拟合余弦波，既保证绝对光滑，又还原圆润形状
@@ -243,16 +249,17 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
             ctx.closePath()
             break
 
-        case ShapeType.wave:
+        case ShapeType.四叶草:
             // 四象限大波浪 (中心对称)
             // 确保在任何角落露出的都是波浪
             const wSize = size * 1.3
+            const t = -1.5
             ctx.moveTo(wSize, 0)
             // 四个象限的波浪曲线
-            ctx.bezierCurveTo(wSize, wSize*0.6, wSize*0.6, wSize, 0, wSize)
-            ctx.bezierCurveTo(-wSize*0.6, wSize, -wSize, wSize*0.6, -wSize, 0)
-            ctx.bezierCurveTo(-wSize, -wSize*0.6, -wSize*0.6, -wSize, 0, -wSize)
-            ctx.bezierCurveTo(wSize*0.6, -wSize, wSize, -wSize*0.6, wSize, 0)
+            ctx.bezierCurveTo(wSize, wSize*t, wSize*t, wSize, 0, wSize)
+            ctx.bezierCurveTo(-wSize*t, wSize, -wSize, wSize*t, -wSize, 0)
+            ctx.bezierCurveTo(-wSize, -wSize*t, -wSize*t, -wSize, 0, -wSize)
+            ctx.bezierCurveTo(wSize*t, -wSize, wSize, -wSize*t, wSize, 0)
             ctx.closePath()
             break
             
@@ -312,7 +319,7 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.translate(width/2, height/2)
     ddeegg += Math.PI * 0.001
     ctx.rotate(ddeegg)
-    drawPattern(ctx, { type: ShapeType.wave, rotate: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
+    drawPattern(ctx, { type: ShapeType.star5, rotate: 0, rotateSpd: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
     ctx.restore()
     
     // 上方
@@ -325,7 +332,7 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.save()
     ctx.translate(...data.shapeTopLg.offset)
     ctx.rotate(data.shapeTopLg.rotate)
-    ctx.globalAlpha = 0.5
+    ctx.globalAlpha = 0.1
     drawPattern(ctx, data.shapeTopLg)
     ctx.restore()
 
@@ -351,6 +358,7 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.save()
     ctx.translate(...data.shapeBottomLg.offset)
     ctx.rotate(data.shapeBottomLg.rotate)
+    ctx.scale(0.9, 0.9)
     ctx.globalAlpha = 0.3
     drawPattern(ctx, data.shapeBottomLg)
     ctx.restore()
@@ -359,8 +367,8 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.save()
     ctx.translate(...data.shapeBottomSm.offset)
     ctx.rotate(data.shapeBottomSm.rotate)
-    ctx.scale(1.2, 1.2)
-    ctx.globalAlpha = 0.8
+    ctx.scale(1.1, 1.1)
+    ctx.globalAlpha = 1
     drawPattern(ctx, data.shapeBottomSm)
     ctx.restore()
     ctx.restore()
