@@ -1,20 +1,45 @@
 import "@ceale/util"
-import { getCtxSize, randomHarmoniousColors, random } from "./util"
+import { getCtxSize, random } from "./util"
+
+export const randomHarmoniousColors = (): [string, string] => {
+    // 1. 随机主色相
+    const h1 = random(0, 360)
+    
+    // 2. 决定第二个颜色的关系：
+    // 50% 概率是邻近色 (±30-60度) -> 柔和融洽
+    // 50% 概率是对比色 (±120-150度) -> 活泼融洽
+    const offset = random(15, 30) * (Math.random() > 0.5 ? 1 : -1)
+        
+    let h2 = (h1 + offset) % 360
+    if (h2 < 0) h2 += 360
+    
+    // 3. 统一的饱和度和亮度风格 (Pop Cute)
+    const s1 = random(45, 75)
+    const l1 = random(85, 95)
+    
+    const s2 = random(45, 75)
+    const l2 = random(85, 95)
+    
+    return [
+        `hsl(${h1}, ${s1}%, ${l1}%)`, 
+        `hsl(${h2}, ${s2}%, ${l2}%)`
+    ]
+}
 
 enum ShapeType {
-    circle,
-    wave,        // 四象限大波浪
-    squircle,    // 超圆润矩形
-    flower,      // 8瓣花
-    polygon5,    // 圆角五边形
-    polygon6,    // 圆角六边形
-    polygon8,    // 圆角八边形
-    star4,       // 圆角四角星 (Diamond)
-    star5,       // 圆角五角星
-    shield,      // 盾形
-    heart,       // 心形
-    clover,      // 四叶草
-    scallop,     // 扇贝形
+    circle = "circle",
+    wave = "wave",        // 四象限大波浪
+    squircle = "squircle",    // 超圆润矩形
+    flower = "flower",      // 8瓣花
+    polygon5 = "polygon5",    // 圆角五边形
+    polygon6 = "polygon6",    // 圆角六边形
+    polygon8 = "polygon8",    // 圆角八边形
+    star4 = "star4",       // 圆角四角星 (Diamond)
+    star5 = "star5",       // 圆角五角星
+    shield = "shield",      // 盾形
+    heart = "heart",       // 心形
+    clover = "clover",      // 四叶草
+    scallop = "scallop",     // 扇贝形
 }
 
 const randomType = () => {
@@ -23,8 +48,7 @@ const randomType = () => {
 }
 
 interface AAA {
-    offsetLg: [ number, number ]
-    offsetSm: [ number, number ]
+    offset: [ number, number ]
     rotate: number
     type: ShapeType
     color: string
@@ -32,31 +56,51 @@ interface AAA {
 
 interface CornerState {
     direction: "↖" | "↗"
-    shapeTop: AAA
-    shapeBottom: AAA
+    shapeTopLg: AAA
+    shapeTopSm: AAA
+    shapeBottomLg: AAA
+    shapeBottomSm: AAA
 }
 
 let data!: CornerState
 
 export const init边角图形 = () => {
-    const [c1, c2] = randomHarmoniousColors()
+    const [ c1, c2 ] = randomHarmoniousColors()
+    const [ t1, t2 ] = [ randomType(), randomType() ]
     data = {
         direction: Math.random() > 0.5 ? "↖" : "↗",
-        shapeTop: {
-            offsetLg: [ random(-35, 35), random(-35, 35) ],
-            offsetSm: [ random(-20, 20), random(-20, 20) ],
+        shapeTopLg: {
+            offset: [ random(-35, 35), random(-35, 35) ],
             rotate: 0,
-            type: randomType(),
+            type: t1,
             color: c1
         },
-        shapeBottom: {
-            offsetLg: [ random(-35, 35), random(-35, 35) ],
-            offsetSm: [ random(-20, 20), random(-20, 20) ],
+        shapeTopSm: {
+            offset: [ random(-20, 20), random(-20, 20) ],
             rotate: 0,
-            type: randomType(),
+            type: t1,
+            color: c1
+        },
+        shapeBottomLg: {
+            offset: [ random(-35, 35), random(-35, 35) ],
+            rotate: 0,
+            type: t2,
+            color: c2
+        },
+        shapeBottomSm: {
+            offset: [ random(-20, 20), random(-20, 20) ],
+            rotate: 0,
+            type: t2,
             color: c2
         }
     }
+    console.log(data)
+    setInterval(() => {
+        data.shapeTopLg.rotate = (data.shapeTopLg.rotate + 十分之一度) % 周角
+        data.shapeTopSm.rotate = (data.shapeTopSm.rotate + 十分之一度) % 周角
+        data.shapeBottomLg.rotate = (data.shapeBottomLg.rotate + 十分之一度) % 周角
+        data.shapeBottomSm.rotate = (data.shapeBottomSm.rotate + 十分之一度) % 周角
+    }, 10)
 }
 
 // 绘制路径 (中心在 0,0)
@@ -235,29 +279,30 @@ const 周角 = 2 * Math.PI
 const 十分之一度 = 2 * Math.PI / 3600
 
 export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
-    data.shapeTop.rotate = (data.shapeTop.rotate + 十分之一度) % 周角
-    data.shapeBottom.rotate = (data.shapeBottom.rotate + 十分之一度) % 周角
     const [ width, height ] = getCtxSize(ctx)
     
     // 上方
     ctx.save()
     if (data.direction === "↗") {
-        ctx.translate(width, 0)
+        // ctx.translate(width, 0)
     }
+    ctx.translate(width/2, height/2)
 
     // 大的
     ctx.save()
-    ctx.translate(...data.shapeTop.offsetLg)
-    ctx.rotate(data.shapeTop.rotate)
-    drawPattern(ctx, data.shapeTop)
+    ctx.translate(...data.shapeTopLg.offset)
+    ctx.rotate(data.shapeTopLg.rotate)
+    ctx.globalAlpha = 0.5
+    drawPattern(ctx, data.shapeTopLg)
     ctx.restore()
 
     // 小的
     ctx.save()
-    ctx.translate(...data.shapeTop.offsetSm)
-    ctx.rotate(data.shapeTop.rotate)
+    ctx.translate(...data.shapeTopSm.offset)
+    ctx.rotate(data.shapeTopSm.rotate)
     ctx.scale(1.2, 1.2)
-    drawPattern(ctx, data.shapeTop)
+    ctx.globalAlpha = 1
+    drawPattern(ctx, data.shapeTopSm)
     ctx.restore()
     ctx.restore()
 
@@ -271,17 +316,19 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
 
     // 大的
     ctx.save()
-    ctx.translate(...data.shapeBottom.offsetLg)
-    ctx.rotate(data.shapeBottom.rotate)
-    drawPattern(ctx, data.shapeBottom)
+    ctx.translate(...data.shapeBottomLg.offset)
+    ctx.rotate(data.shapeBottomLg.rotate)
+    ctx.globalAlpha = 0.3
+    drawPattern(ctx, data.shapeBottomLg)
     ctx.restore()
 
     // 小的
     ctx.save()
-    ctx.translate(...data.shapeBottom.offsetSm)
-    ctx.rotate(data.shapeBottom.rotate)
+    ctx.translate(...data.shapeBottomSm.offset)
+    ctx.rotate(data.shapeBottomSm.rotate)
     ctx.scale(1.2, 1.2)
-    drawPattern(ctx, data.shapeBottom)
+    ctx.globalAlpha = 0.8
+    drawPattern(ctx, data.shapeBottomSm)
     ctx.restore()
     ctx.restore()
     
