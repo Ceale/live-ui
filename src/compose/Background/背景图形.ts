@@ -51,7 +51,7 @@ export const init背景图形 = (ctx: CanvasRenderingContext2D) => {
             color: randomColor(),
             offsetX: random(0, Math.PI * 2),
             offsetY: random(0, Math.PI * 2),
-            speed: random(0.5, 1.5), // 晃动速度
+            speed: random(0.15, 0.5), // 晃动速度
             range: random(10, 30)    // 晃动范围
         })
     }
