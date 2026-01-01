@@ -22,31 +22,47 @@ const randomType = () => {
     return ShapeType[keys[Math.floor(random(0, keys.length))] as keyof typeof ShapeType]
 }
 
-interface CornerState {
-    direction: "↖" | "↗"
-    shape1: ShapeType
-    shape2: ShapeType
-    color1: string
-    color2: string
+interface AAA {
+    offsetLg: [ number, number ]
+    offsetSm: [ number, number ]
+    rotate: number
+    type: ShapeType
+    color: string
 }
 
-let state: CornerState
+interface CornerState {
+    direction: "↖" | "↗"
+    shapeTop: AAA
+    shapeBottom: AAA
+}
+
+let data!: CornerState
 
 export const init边角图形 = () => {
     const [c1, c2] = randomHarmoniousColors()
-    state = {
+    data = {
         direction: Math.random() > 0.5 ? "↖" : "↗",
-        shape1: randomType(),
-        shape2: randomType(),
-        color1: c1,
-        color2: c2
+        shapeTop: {
+            offsetLg: [ random(-35, 35), random(-35, 35) ],
+            offsetSm: [ random(-20, 20), random(-20, 20) ],
+            rotate: 0,
+            type: randomType(),
+            color: c1
+        },
+        shapeBottom: {
+            offsetLg: [ random(-35, 35), random(-35, 35) ],
+            offsetSm: [ random(-20, 20), random(-20, 20) ],
+            rotate: 0,
+            type: randomType(),
+            color: c2
+        }
     }
 }
 
 // 绘制路径 (中心在 0,0)
-const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number) => {
+const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
     ctx.beginPath()
-    switch (type) {
+    switch (data.type) {
         case ShapeType.circle:
             ctx.arc(0, 0, size, 0, Math.PI * 2)
             break
@@ -212,54 +228,51 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
     }
 }
 
-const drawSingleCorner = (ctx: CanvasRenderingContext2D, shape: ShapeType, color: string) => {
-    const baseSize = 300 
-    
-    ctx.save()
-    pathShape(ctx, shape, baseSize)
-    ctx.globalAlpha = 0.5
-    ctx.fillStyle = color
-    ctx.fill()
-    ctx.restore()
-
-    ctx.save()
-    ctx.translate(20, 20)
-    pathShape(ctx, shape, baseSize * 0.80)
-    ctx.globalAlpha = 1.0
-    ctx.fillStyle = color
-    ctx.fill()
-    ctx.restore()
-}
-
 export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
+    data.shapeTop.rotate = (data.shapeTop.rotate + 0.05) % 360
+    data.shapeBottom.rotate = (data.shapeBottom.rotate + 0.05) % 360
     const [ width, height ] = getCtxSize(ctx)
+    
+    // 上方
     ctx.save()
-
-    // 1. 绘制第一个角 (左上 or 右上)
-    ctx.save()
-    if (state.direction === "↗") {
-        // 右上：平移到 (width, 0)
+    if (data.direction === "↗") {
         ctx.translate(width, 0)
-        // 不翻转，图形直接绘制，露出其第三象限(左下部分)
-    } else {
-        // 左上：(0,0)，露出其第四象限(右下部分)
     }
-    drawSingleCorner(ctx, state.shape1, state.color1)
+
+    // 大的
+    ctx.save()
+    ctx.translate(...data.shapeTop.offsetLg)
+    drawPattern(ctx, data)
     ctx.restore()
 
-    // 2. 绘制第二个角 (右下 or 左下)
+    // 小的
     ctx.save()
-    if (state.direction === "↖") {
-        // 右下：平移到 (width, height)
-        ctx.translate(width, height)
-        // 露出其第二象限(左上部分)
-    } else {
-        // 左下：平移到 (0, height)
+    ctx.translate(...data.shapeTop.offsetSm)
+    ctx.scale(1.2, 1.2)
+    drawPattern(ctx, data)
+    ctx.restore()
+    ctx.restore()
+
+    // 下方
+    ctx.save()
+    if (data.direction === "↗") {
         ctx.translate(0, height)
-        // 露出其第一象限(右上部分)
+    } else {
+        ctx.translate(width, height)
     }
-    drawSingleCorner(ctx, state.shape2, state.color2)
+
+    // 大的
+    ctx.save()
+    ctx.translate(...data.shapeTop.offsetLg)
+    drawPattern(ctx, data)
+    ctx.restore()
+
+    // 小的
+    ctx.save()
+    ctx.translate(...data.shapeTop.offsetSm)
+    ctx.scale(1.2, 1.2)
+    drawPattern(ctx, data)
+    ctx.restore()
     ctx.restore()
     
-    ctx.restore()
 }
