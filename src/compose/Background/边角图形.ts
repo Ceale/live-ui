@@ -35,7 +35,7 @@ enum ShapeType {
     polygon6,    // 圆角六边形
     polygon8,    // 圆角八边形
     star4,       // 圆角四角星 (Diamond)
-    star5,       // 圆角五角星
+    五角星,       // 圆角五角星
     shield,      // 盾形
     heart,       // 心形
     clover,      // 四叶草
@@ -183,11 +183,11 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
             }
             break
 
-        case ShapeType.star5:
+        case ShapeType.五角星:
             const s5Points = []
-            const s5Inner = 250
+            const s5Inner = 260
             for(let i=0; i<10; i++) {
-                const rad = i%2===0 ? 450 : s5Inner
+                const rad = i%2===0 ? 460 : s5Inner
                 const a = i * Math.PI/5 - Math.PI/2
                 s5Points.push({x: rad*Math.cos(a), y: rad*Math.sin(a)})
             }
@@ -204,7 +204,13 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
                     const nextP = s5Points[(i + 1) % len]
                     const nextMidX = (p.x + nextP.x) / 2
                     const nextMidY = (p.y + nextP.y) / 2
-                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, 60)
+                    
+                    // 区分内外角的圆角半径
+                    // i 是偶数 -> 外角 (Tip) -> 保持较小圆角 (40)
+                    // i 是奇数 -> 内角 (Valley) -> 加大圆角 (120)
+                    const radius = (i % 2 === 0) ? 80 : 120
+                    
+                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, radius)
                     ctx.lineTo(nextMidX, nextMidY)
                 }
                 ctx.closePath()
@@ -319,7 +325,7 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.translate(width/2, height/2)
     ddeegg += Math.PI * 0.001
     ctx.rotate(ddeegg)
-    drawPattern(ctx, { type: ShapeType.star5, rotate: 0, rotateSpd: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
+    drawPattern(ctx, { type: ShapeType.五角星, rotate: 0, rotateSpd: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
     ctx.restore()
     
     // 上方
