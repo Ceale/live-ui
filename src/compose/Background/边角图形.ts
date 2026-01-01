@@ -1,15 +1,6 @@
-import { getCtxSize, random, randomColor } from "./util"
+import { getCtxSize } from "./util"
 
-interface Decoration {
-    x: number
-    y: number
-    size: number
-    color: string
-}
-
-const decorations: Decoration[] = []
-
-export const draw背景图案 = (ctx: CanvasRenderingContext2D) => {
+export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     // 绘制几个大的色块作为底层装饰
     const [ width, height ] = getCtxSize(ctx)
     ctx.save()
@@ -39,28 +30,5 @@ export const draw背景图案 = (ctx: CanvasRenderingContext2D) => {
     ctx.fillStyle = "#E1BEE7" // 稍深一点的淡紫
     ctx.fill()
     
-    // 3. 随机分布的波点群 (Polka Dots)
-    decorations.forEach(dec => {
-        ctx.fillStyle = dec.color
-        ctx.globalAlpha = 0.5
-        ctx.beginPath()
-        ctx.arc(dec.x, dec.y, dec.size, 0, Math.PI*2)
-        ctx.fill()
-    })
-    ctx.globalAlpha = 1.0
-
     ctx.restore()
-}
-
-export const init背景图案 = (ctx: CanvasRenderingContext2D) => {
-    const [ width, height ] = getCtxSize(ctx)
-    decorations.length = 0
-    for(let i=0; i<5; i++) {
-        decorations.push({
-            x: random(0, width),
-            y: random(0, height),
-            size: random(30, 80),
-            color: randomColor()
-        })
-    }
 }

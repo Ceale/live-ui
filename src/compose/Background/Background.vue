@@ -3,7 +3,8 @@ import { onMounted, onUnmounted, useTemplateRef } from "vue"
 import { drawBackground as draw背景 } from "./背景"
 import { getCtxSize } from "./util"
 import { draw网格点 } from "./网格点"
-import { draw背景图案, init背景图案 } from "./背景图案"
+import { draw背景图形, init背景图形 } from "./背景图形"
+import { draw边角图形 } from "./边角图形"
 import { draw形状, init形状 } from "./形状"
 
 const canvasRef = useTemplateRef("canvas")
@@ -14,13 +15,14 @@ interface ctxFunc {
 }
 
 const initList: ctxFunc[] = [
-    init背景图案,
+    init背景图形,
     init形状
 ]
 
 const drawList: ctxFunc[] = [
     draw背景,
-    draw背景图案,
+    draw边角图形,
+    draw背景图形,
     draw网格点,
     draw形状,
 ]
