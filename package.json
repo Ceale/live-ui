@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ceale/util": "^1.17.0",
     "vue": "^3.4.21",
     "zepto": "^1.2.0"
   },
