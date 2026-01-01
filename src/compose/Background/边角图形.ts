@@ -27,19 +27,19 @@ export const randomHarmoniousColors = (): [string, string] => {
 }
 
 enum ShapeType {
-    circle = "circle",
-    wave = "wave",        // 四象限大波浪
-    squircle = "squircle",    // 超圆润矩形
-    flower = "flower",      // 8瓣花
-    polygon5 = "polygon5",    // 圆角五边形
-    polygon6 = "polygon6",    // 圆角六边形
-    polygon8 = "polygon8",    // 圆角八边形
-    star4 = "star4",       // 圆角四角星 (Diamond)
-    star5 = "star5",       // 圆角五角星
-    shield = "shield",      // 盾形
-    heart = "heart",       // 心形
-    clover = "clover",      // 四叶草
-    scallop = "scallop",     // 扇贝形
+    circle,
+    wave,        // 四象限大波浪
+    squircle,    // 超圆润矩形
+    flower,      // 8瓣花
+    polygon5,    // 圆角五边形
+    polygon6,    // 圆角六边形
+    polygon8,    // 圆角八边形
+    star4,       // 圆角四角星 (Diamond)
+    star5,       // 圆角五角星
+    shield,      // 盾形
+    heart,       // 心形
+    clover,      // 四叶草
+    scallop,     // 扇贝形
 }
 
 const randomType = () => {
@@ -94,7 +94,6 @@ export const init边角图形 = () => {
             color: c2
         }
     }
-    console.log(data)
     setInterval(() => {
         data.shapeTopLg.rotate = (data.shapeTopLg.rotate + 十分之一度) % 周角
         data.shapeTopSm.rotate = (data.shapeTopSm.rotate + 十分之一度) % 周角
@@ -208,12 +207,38 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
             
         case ShapeType.flower:
             const petals = 8
-            for (let i = 0; i <= Math.PI * 2; i += 0.05) {
-                 const rad = size - (size * 0.25) * Math.cos(i * petals)
-                 const x = rad * Math.cos(i)
-                 const y = rad * Math.sin(i)
-                 if (i === 0) ctx.moveTo(x, y)
-                 else ctx.lineTo(x, y)
+            const valleyR = size * 0.8
+            const peakR = size * 1.1
+            const step = Math.PI / petals // 22.5度
+
+            // 使用三次贝塞尔曲线拟合余弦波，既保证绝对光滑，又还原圆润形状
+            const handleLen = size * 0.15
+
+            ctx.moveTo(valleyR, 0)
+            
+            for (let i = 0; i < petals * 2; i++) {
+                const startAngle = i * step
+                const endAngle = (i + 1) * step
+                
+                // 偶数段：谷 -> 峰；奇数段：峰 -> 谷
+                const isValleyToPeak = i % 2 === 0
+                
+                const rStart = isValleyToPeak ? valleyR : peakR
+                const rEnd = isValleyToPeak ? peakR : valleyR
+                
+                // 终点坐标
+                const p2x = rEnd * Math.cos(endAngle)
+                const p2y = rEnd * Math.sin(endAngle)
+                
+                // CP1: 起点沿切线方向延伸 (-sin, cos)
+                const cp1x = (rStart * Math.cos(startAngle)) - Math.sin(startAngle) * handleLen
+                const cp1y = (rStart * Math.sin(startAngle)) + Math.cos(startAngle) * handleLen
+
+                // CP2: 终点沿切线反方向延伸
+                const cp2x = p2x + Math.sin(endAngle) * handleLen
+                const cp2y = p2y - Math.cos(endAngle) * handleLen
+                
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2x, p2y)
             }
             ctx.closePath()
             break
@@ -278,12 +303,16 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
 const 周角 = 2 * Math.PI
 const 十分之一度 = 2 * Math.PI / 3600
 
+let ddeegg = 0
+
 export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
 
     ctx.save()
     ctx.translate(width/2, height/2)
-    drawPattern(ctx, { type: ShapeType.circle, rotate: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
+    ddeegg += Math.PI * 0.001
+    ctx.rotate(ddeegg)
+    drawPattern(ctx, { type: ShapeType.wave, rotate: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
     ctx.restore()
     
     // 上方
