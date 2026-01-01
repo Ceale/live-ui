@@ -61,7 +61,9 @@ export const init边角图形 = () => {
 
 // 绘制路径 (中心在 0,0)
 const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
+    const size = 300
     ctx.beginPath()
+    ctx.fillStyle = data.color
     switch (data.type) {
         case ShapeType.circle:
             ctx.arc(0, 0, size, 0, Math.PI * 2)
@@ -77,8 +79,8 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
         case ShapeType.polygon6:
         case ShapeType.polygon8:
             let sides = 6
-            if (type === ShapeType.polygon5) sides = 5
-            if (type === ShapeType.polygon8) sides = 8
+            if (data.type === ShapeType.polygon5) sides = 5
+            if (data.type === ShapeType.polygon8) sides = 8
             const polyPoints = []
             for (let i = 0; i < sides; i++) {
                 const angle = (i * 2 * Math.PI) / sides - Math.PI/2
@@ -226,11 +228,12 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
             ctx.closePath()
             break
     }
+    ctx.fill()
 }
 
 export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
-    data.shapeTop.rotate = (data.shapeTop.rotate + 0.05) % 360
-    data.shapeBottom.rotate = (data.shapeBottom.rotate + 0.05) % 360
+    data.shapeTop.rotate = (data.shapeTop.rotate + 5) % 360
+    data.shapeBottom.rotate = (data.shapeBottom.rotate + 5) % 360
     const [ width, height ] = getCtxSize(ctx)
     
     // 上方
@@ -242,12 +245,14 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     // 大的
     ctx.save()
     ctx.translate(...data.shapeTop.offsetLg)
+    ctx.rotate(data.shapeTop.rotate)
     drawPattern(ctx, data.shapeTop)
     ctx.restore()
 
     // 小的
     ctx.save()
     ctx.translate(...data.shapeTop.offsetSm)
+    ctx.rotate(data.shapeTop.rotate)
     ctx.scale(1.2, 1.2)
     drawPattern(ctx, data.shapeTop)
     ctx.restore()
@@ -264,12 +269,14 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     // 大的
     ctx.save()
     ctx.translate(...data.shapeBottom.offsetLg)
+    ctx.rotate(data.shapeBottom.rotate)
     drawPattern(ctx, data.shapeBottom)
     ctx.restore()
 
     // 小的
     ctx.save()
     ctx.translate(...data.shapeBottom.offsetSm)
+    ctx.rotate(data.shapeBottom.rotate)
     ctx.scale(1.2, 1.2)
     drawPattern(ctx, data.shapeBottom)
     ctx.restore()
