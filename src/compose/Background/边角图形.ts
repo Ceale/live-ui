@@ -1,10 +1,24 @@
+// import { EnumDeclaration } from "typescript"
+import "@ceale/util"
 import { getCtxSize, randomHarmoniousColors, random } from "./util"
 
-type ShapeType = 'circle' | 'wave' | 'squircle' | 'flower' | 'polygon' | 'star'
-const SHAPES: ShapeType[] = ['circle', 'wave', 'squircle', 'flower', 'polygon', 'star']
+enum ShapeType {
+    wave,
+    squircle,
+    flower,
+    polygon,
+    star
+}
+
+const randomType = () => {
+    const values = Object.values(ShapeType)
+    values.length = values.length / 2
+    return values[Math.floor(random(0, values.length))] as ShapeType
+}
+
 
 interface CornerState {
-    direction: '↖' | '↗'
+    direction: "↖" | "↗"
     shape1: ShapeType
     shape2: ShapeType
     color1: string
@@ -16,12 +30,14 @@ let state: CornerState
 export const init边角图形 = () => {
     const [c1, c2] = randomHarmoniousColors()
     state = {
-        direction: Math.random() > 0.5 ? '↖' : '↗',
-        shape1: SHAPES[Math.floor(random(0, SHAPES.length))],
-        shape2: SHAPES[Math.floor(random(0, SHAPES.length))],
+        // direction: Math.random() > 0.5 ? "↖" : "↗",
+        direction: "↗",
+        shape1: randomType(),
         color1: c1,
+        shape2: randomType(),
         color2: c2
     }
+    console.log(state)
 }
 
 // 辅助：绘制圆角多边形/星形路径
@@ -52,10 +68,10 @@ const drawRoundedPoints = (ctx: CanvasRenderingContext2D, points: {x: number, y:
 const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number) => {
     ctx.beginPath()
     switch (type) {
-        case 'circle':
+        case ShapeType.circle:
             ctx.arc(0, 0, size, 0, Math.PI * 2)
             break
-        case 'squircle':
+        case ShapeType.squircle:
             const r = size
             if (ctx.roundRect) {
                 ctx.roundRect(-r, -r, r*2, r*2, r*0.6)
@@ -63,7 +79,7 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
                 ctx.rect(-r, -r, r*2, r*2)
             }
             break
-        case 'polygon':
+        case ShapeType.polygon:
             const sides = 6
             const polyPoints = []
             for (let i = 0; i < sides; i++) {
@@ -75,7 +91,7 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
             }
             drawRoundedPoints(ctx, polyPoints, 60)
             break
-        case 'star':
+        case ShapeType.star:
             const points = 5
             const innerSize = size * 0.5
             const starPoints = []
@@ -88,7 +104,7 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
             }
             drawRoundedPoints(ctx, starPoints, 40)
             break
-        case 'flower':
+        case ShapeType.flower:
             // 8瓣花
             const petals = 8
             for (let i = 0; i <= Math.PI * 2; i += 0.05) {
@@ -100,7 +116,7 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
             }
             ctx.closePath()
             break
-        case 'wave':
+        case ShapeType.wave:
             // 原版大波浪的复刻 (适配到 0,0)
             // 模拟一个从左上角延伸的大波浪扇形
             ctx.moveTo(0, 0)
@@ -139,14 +155,11 @@ const drawSingleCorner = (ctx: CanvasRenderingContext2D, shape: ShapeType, color
 
 export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
-    ctx.save()
 
     // 1. 绘制第一个角
     ctx.save()
-    if (state.direction === '↗') {
-        // 右上角：平移到右上，水平翻转
+    if (state.direction === "↗") {
         ctx.translate(width, 0)
-        ctx.scale(-1, 1)
     }
     // 如果是 ↖，默认在 (0,0)
     drawSingleCorner(ctx, state.shape1, state.color1)
@@ -154,19 +167,11 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
 
     // 2. 绘制第二个角
     ctx.save()
-    if (state.direction === '↖') {
-        // 左上-右下模式：第二个在右下 (width, height)
-        // 旋转180度，变为从 (0,0) 向内
-        ctx.translate(width, height)
-        ctx.rotate(Math.PI)
-    } else {
-        // 右上-左下模式：第二个在左下 (0, height)
-        // 垂直翻转 (或移到左下后 y 轴反转)
-        ctx.translate(0, height)
-        ctx.scale(1, -1)
+    ctx.translate(0, height)
+    if (state.direction === "↖") {
+        ctx.translate(width, 0)
     }
     drawSingleCorner(ctx, state.shape2, state.color2)
     ctx.restore()
-    
-    ctx.restore()
+
 }
