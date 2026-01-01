@@ -112,7 +112,6 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
             ctx.strokeStyle = shape.color // 波浪线用彩色描边
             ctx.lineWidth = 5
             ctx.stroke()
-            // 恢复描边设置以便后续统一（虽然这里break了）
             break
     }
     
