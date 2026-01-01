@@ -4,16 +4,11 @@ export const getCtxSize = (ctx: CanvasRenderingContext2D): [ number, number ] =>
 
 export const random = (min: number, max: number) => Math.random() * (max - min) + min
 
-const colors = [
-    "#FFB7B2", // 柔和粉
-    "#B5EAD7", // 薄荷绿
-    "#E2F0CB", // 浅黄绿
-    "#FFDAC1", // 杏色
-    "#E0BBE4", // 淡紫
-    "#957DAD", // 深一点的紫
-    "#FEC8D8", // 樱花粉
-    "#D291BC", // 藕荷色
-    "#A0E7E5", // 蒂芙尼蓝
-]
-
-export const randomColor = () => colors[Math.floor(Math.random() * colors.length)]
+export const randomColor = () => {
+    const h = random(0, 360)
+    // 饱和度：保持在 50% - 80% 之间，稍微提高一点饱和度上限以匹配“鲜艳活泼”
+    const s = random(50, 80)
+    // 亮度：保持在 75% - 90% 之间，确保颜色明亮但不刺眼
+    const l = random(75, 90)
+    return `hsl(${h}, ${s}%, ${l}%)`
+}
