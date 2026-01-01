@@ -242,14 +242,14 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     // 大的
     ctx.save()
     ctx.translate(...data.shapeTop.offsetLg)
-    drawPattern(ctx, data)
+    drawPattern(ctx, data.shapeTop)
     ctx.restore()
 
     // 小的
     ctx.save()
     ctx.translate(...data.shapeTop.offsetSm)
     ctx.scale(1.2, 1.2)
-    drawPattern(ctx, data)
+    drawPattern(ctx, data.shapeTop)
     ctx.restore()
     ctx.restore()
 
@@ -263,15 +263,15 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
 
     // 大的
     ctx.save()
-    ctx.translate(...data.shapeTop.offsetLg)
-    drawPattern(ctx, data)
+    ctx.translate(...data.shapeBottom.offsetLg)
+    drawPattern(ctx, data.shapeBottom)
     ctx.restore()
 
     // 小的
     ctx.save()
-    ctx.translate(...data.shapeTop.offsetSm)
+    ctx.translate(...data.shapeBottom.offsetSm)
     ctx.scale(1.2, 1.2)
-    drawPattern(ctx, data)
+    drawPattern(ctx, data.shapeBottom)
     ctx.restore()
     ctx.restore()
     
