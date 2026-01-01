@@ -3,7 +3,7 @@ import { getCtxSize, randomHarmoniousColors, random } from "./util"
 
 enum ShapeType {
     circle,
-    wave,        // 原版扇形大波浪
+    wave,        // 四象限大波浪
     squircle,    // 超圆润矩形
     flower,      // 8瓣花
     polygon5,    // 圆角五边形
@@ -14,12 +14,10 @@ enum ShapeType {
     shield,      // 盾形
     heart,       // 心形
     clover,      // 四叶草
-    scallop,     // 扇贝形 (M3 图片里的波浪圆)
+    scallop,     // 扇贝形
 }
 
 const randomType = () => {
-    // 随机选择一个枚举值
-    // 枚举在 TS 编译后是对象，key 包含数字和字符串，需要过滤
     const keys = Object.keys(ShapeType).filter(k => isNaN(Number(k)))
     return ShapeType[keys[Math.floor(random(0, keys.length))] as keyof typeof ShapeType]
 }
@@ -43,28 +41,6 @@ export const init边角图形 = () => {
         color1: c1,
         color2: c2
     }
-}
-
-// 辅助：绘制圆角多边形/星形路径
-const drawRoundedPoints = (ctx: CanvasRenderingContext2D, points: {x: number, y: number}[], radius: number) => {
-    if (points.length < 3) return
-    const len = points.length
-    const p0 = points[0]
-    const pLast = points[len-1]
-    const midX = (p0.x + pLast.x) / 2
-    const midY = (p0.y + pLast.y) / 2
-    ctx.moveTo(midX, midY)
-
-    for (let i = 0; i < len; i++) {
-        const p = points[i]
-        const nextP = points[(i + 1) % len]
-        const nextMidX = (p.x + nextP.x) / 2
-        const nextMidY = (p.y + nextP.y) / 2
-        
-        ctx.arcTo(p.x, p.y, nextMidX, nextMidY, radius)
-        ctx.lineTo(nextMidX, nextMidY)
-    }
-    ctx.closePath()
 }
 
 // 绘制路径 (中心在 0,0)
@@ -92,7 +68,24 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
                 const angle = (i * 2 * Math.PI) / sides - Math.PI/2
                 polyPoints.push({x: size * Math.cos(angle), y: size * Math.sin(angle)})
             }
-            drawRoundedPoints(ctx, polyPoints, 60)
+            // 内联绘制逻辑
+            if (polyPoints.length >= 3) {
+                const len = polyPoints.length
+                const p0 = polyPoints[0]
+                const pLast = polyPoints[len-1]
+                const midX = (p0.x + pLast.x) / 2
+                const midY = (p0.y + pLast.y) / 2
+                ctx.moveTo(midX, midY)
+                for (let i = 0; i < len; i++) {
+                    const p = polyPoints[i]
+                    const nextP = polyPoints[(i + 1) % len]
+                    const nextMidX = (p.x + nextP.x) / 2
+                    const nextMidY = (p.y + nextP.y) / 2
+                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, 60)
+                    ctx.lineTo(nextMidX, nextMidY)
+                }
+                ctx.closePath()
+            }
             break
             
         case ShapeType.star4: // Diamond
@@ -103,7 +96,24 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
                 const a = i * Math.PI/4 - Math.PI/2
                 s4Points.push({x: rad*Math.cos(a), y: rad*Math.sin(a)})
             }
-            drawRoundedPoints(ctx, s4Points, 40)
+            // 内联绘制逻辑
+            if (s4Points.length >= 3) {
+                const len = s4Points.length
+                const p0 = s4Points[0]
+                const pLast = s4Points[len-1]
+                const midX = (p0.x + pLast.x) / 2
+                const midY = (p0.y + pLast.y) / 2
+                ctx.moveTo(midX, midY)
+                for (let i = 0; i < len; i++) {
+                    const p = s4Points[i]
+                    const nextP = s4Points[(i + 1) % len]
+                    const nextMidX = (p.x + nextP.x) / 2
+                    const nextMidY = (p.y + nextP.y) / 2
+                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, 40)
+                    ctx.lineTo(nextMidX, nextMidY)
+                }
+                ctx.closePath()
+            }
             break
 
         case ShapeType.star5:
@@ -114,7 +124,24 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
                 const a = i * Math.PI/5 - Math.PI/2
                 s5Points.push({x: rad*Math.cos(a), y: rad*Math.sin(a)})
             }
-            drawRoundedPoints(ctx, s5Points, 40)
+            // 内联绘制逻辑
+            if (s5Points.length >= 3) {
+                const len = s5Points.length
+                const p0 = s5Points[0]
+                const pLast = s5Points[len-1]
+                const midX = (p0.x + pLast.x) / 2
+                const midY = (p0.y + pLast.y) / 2
+                ctx.moveTo(midX, midY)
+                for (let i = 0; i < len; i++) {
+                    const p = s5Points[i]
+                    const nextP = s5Points[(i + 1) % len]
+                    const nextMidX = (p.x + nextP.x) / 2
+                    const nextMidY = (p.y + nextP.y) / 2
+                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, 40)
+                    ctx.lineTo(nextMidX, nextMidY)
+                }
+                ctx.closePath()
+            }
             break
             
         case ShapeType.flower:
@@ -130,14 +157,19 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
             break
 
         case ShapeType.wave:
-            // 原版扇形大波浪 (适配到 0,0)
-            ctx.moveTo(0, 0)
-            ctx.lineTo(size * 1.3, 0)
-            ctx.bezierCurveTo(size * 1.1, size * 0.7, size * 0.7, size * 1.1, 0, size * 1.3)
+            // 四象限大波浪 (中心对称)
+            // 确保在任何角落露出的都是波浪
+            const wSize = size * 1.3
+            ctx.moveTo(wSize, 0)
+            // 四个象限的波浪曲线
+            ctx.bezierCurveTo(wSize, wSize*0.6, wSize*0.6, wSize, 0, wSize)
+            ctx.bezierCurveTo(-wSize*0.6, wSize, -wSize, wSize*0.6, -wSize, 0)
+            ctx.bezierCurveTo(-wSize, -wSize*0.6, -wSize*0.6, -wSize, 0, -wSize)
+            ctx.bezierCurveTo(wSize*0.6, -wSize, wSize, -wSize*0.6, wSize, 0)
             ctx.closePath()
             break
             
-        case ShapeType.scallop: // M3 Scallop
+        case ShapeType.scallop:
             const waveCount = 12
             for (let i = 0; i <= Math.PI * 2; i += 0.05) {
                  const rad = size + (size * 0.1) * Math.sin(i * waveCount)
@@ -150,17 +182,15 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
             break
             
         case ShapeType.shield:
-            // 简单圆润盾形
             ctx.moveTo(-size*0.7, -size*0.7)
             ctx.lineTo(size*0.7, -size*0.7)
-            ctx.quadraticCurveTo(size*0.7, size*0.2, 0, size) // 侧边到尖底
+            ctx.quadraticCurveTo(size*0.7, size*0.2, 0, size) 
             ctx.quadraticCurveTo(-size*0.7, size*0.2, -size*0.7, -size*0.7)
             ctx.closePath()
             break
             
         case ShapeType.heart:
-             // 简单心形
-             const hSize = size * 0.06 // 缩放系数
+             const hSize = size * 0.06
              for(let t=0; t<Math.PI*2; t+=0.1) {
                  const x = 16 * Math.pow(Math.sin(t), 3)
                  const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t))
@@ -183,10 +213,8 @@ const pathShape = (ctx: CanvasRenderingContext2D, type: ShapeType, size: number)
 }
 
 const drawSingleCorner = (ctx: CanvasRenderingContext2D, shape: ShapeType, color: string) => {
-    // 基础大小，足够大以露出一角
     const baseSize = 300 
     
-    // 1. 底层 (半透明)
     ctx.save()
     pathShape(ctx, shape, baseSize)
     ctx.globalAlpha = 0.5
@@ -194,12 +222,9 @@ const drawSingleCorner = (ctx: CanvasRenderingContext2D, shape: ShapeType, color
     ctx.fill()
     ctx.restore()
 
-    // 2. 顶层 (不透明，带偏移)
     ctx.save()
-    // 向内偏移 (20, 20)，增加层次
     ctx.translate(20, 20)
-    // 稍微小一点，或者形状一样大但因为偏移了所以会露出底层
-    pathShape(ctx, shape, baseSize * 0.85)
+    pathShape(ctx, shape, baseSize * 0.80)
     ctx.globalAlpha = 1.0
     ctx.fillStyle = color
     ctx.fill()
@@ -210,27 +235,28 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
     ctx.save()
 
-    // 1. 绘制第一个角
+    // 1. 绘制第一个角 (左上 or 右上)
     ctx.save()
     if (state.direction === "↗") {
+        // 右上：平移到 (width, 0)
         ctx.translate(width, 0)
-        ctx.scale(-1, 1) // 必须翻转，否则图形会画在屏幕外
+        // 不翻转，图形直接绘制，露出其第三象限(左下部分)
+    } else {
+        // 左上：(0,0)，露出其第四象限(右下部分)
     }
-    // 如果是 ↖，默认在 (0,0)
     drawSingleCorner(ctx, state.shape1, state.color1)
     ctx.restore()
 
-    // 2. 绘制第二个角
+    // 2. 绘制第二个角 (右下 or 左下)
     ctx.save()
-    // 先移动到对应位置
     if (state.direction === "↖") {
-        // 第二个角在右下 (width, height)
+        // 右下：平移到 (width, height)
         ctx.translate(width, height)
-        ctx.rotate(Math.PI) // 旋转180度
+        // 露出其第二象限(左上部分)
     } else {
-        // 第二个角在左下 (0, height)
+        // 左下：平移到 (0, height)
         ctx.translate(0, height)
-        ctx.scale(1, -1) // 垂直翻转
+        // 露出其第一象限(右上部分)
     }
     drawSingleCorner(ctx, state.shape2, state.color2)
     ctx.restore()
