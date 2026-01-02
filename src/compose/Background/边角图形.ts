@@ -15,11 +15,11 @@ export const randomHarmoniousColors = (): [string, string] => {
     
     // 3. 统一的饱和度和亮度风格 (Pop Cute)
     const s1 = random(45, 75)
-    const l1 = random(85, 95)
+    const l1 = random(85, 90)
     
     const s2 = random(45, 75)
-    const l2 = random(85, 95)
-    
+    const l2 = random(85, 90)
+
     return [
         `hsl(${h1}, ${s1}%, ${l1}%)`, 
         `hsl(${h2}, ${s2}%, ${l2}%)`
