@@ -37,8 +37,7 @@ enum ShapeType {
     四角星,
     五角星,
     凹吐司面包形,
-    心形,
-    鱼板形,     // 扇贝形
+    鱼板形,
 }
 
 const randomType = () => {
@@ -295,16 +294,6 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
             }
             ctx.closePath()
             break
-            
-        case ShapeType.心形:
-             const h300 = 300 * 0.06
-             for(let t=0; t<Math.PI*2; t+=0.1) {
-                 const x = 16 * Math.pow(Math.sin(t), 3)
-                 const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t))
-                 if(t===0) ctx.moveTo(x*h300, y*h300); else ctx.lineTo(x*h300, y*h300)
-             }
-             ctx.closePath()
-             break
 
         case ShapeType.凹吐司面包形:
              const leaves = 4
