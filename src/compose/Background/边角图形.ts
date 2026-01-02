@@ -27,19 +27,18 @@ export const randomHarmoniousColors = (): [string, string] => {
 }
 
 enum ShapeType {
-    circle,
-    四叶草,        // 四象限大波浪
-    squircle,    // 超圆润矩形
+    圆,
+    四叶草,
+    圆圆圆角正方形,
     七角,
-    polygon5,    // 圆角五边形
-    polygon6,    // 圆角六边形
-    polygon8,    // 圆角八边形
-    star4,       // 圆角四角星 (Diamond)
-    五角星,       // 圆角五角星
-    shield,      // 盾形
-    heart,       // 心形
-    clover,      // 四叶草
-    scallop,     // 扇贝形
+    五边形,
+    六边形,
+    八边形,
+    四角星,
+    五角星,
+    凹吐司面包形,
+    心形,
+    鱼板形,     // 扇贝形
 }
 
 const randomType = () => {
@@ -72,7 +71,7 @@ export const init边角图形 = () => {
     data = {
         direction: Math.random() > 0.5 ? "↖" : "↗",
         shapeTopLg: {
-            offset: [ random(-35, 35), random(-35, 35) ],
+            offset: [ random(-45, 45), random(-35, 35) ],
             rotate: 0,
             rotateSpd: s1,
             type: t1,
@@ -86,7 +85,7 @@ export const init边角图形 = () => {
             color: c1
         },
         shapeBottomLg: {
-            offset: [ random(-35, 35), random(-35, 35) ],
+            offset: [ random(-45, 45), random(-35, 35) ],
             rotate: 0,
             rotateSpd: s2,
             type: t2,
@@ -110,30 +109,29 @@ export const init边角图形 = () => {
 
 // 绘制路径 (中心在 0,0)
 const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
-    const size = 300
     ctx.beginPath()
     ctx.fillStyle = data.color
     switch (data.type) {
-        case ShapeType.circle:
-            ctx.arc(0, 0, size, 0, Math.PI * 2)
+        case ShapeType.圆:
+            ctx.arc(0, 0, 350, 0, Math.PI * 2)
             break
             
-        case ShapeType.squircle:
-            const r = size
-            if (ctx.roundRect) ctx.roundRect(-r, -r, r*2, r*2, r*0.6)
+        case ShapeType.圆圆圆角正方形:
+            const r = 320
+            if (ctx.roundRect) ctx.roundRect(-r, -r, r*2, r*2, r*0.7)
             else ctx.rect(-r, -r, r*2, r*2)
             break
             
-        case ShapeType.polygon5:
-        case ShapeType.polygon6:
-        case ShapeType.polygon8:
-            let sides = 6
-            if (data.type === ShapeType.polygon5) sides = 5
-            if (data.type === ShapeType.polygon8) sides = 8
+        case ShapeType.五边形:
+        case ShapeType.六边形:
+        case ShapeType.八边形:
+            let sides = 5
+            if (data.type === ShapeType.六边形) sides = 6
+            if (data.type === ShapeType.八边形) sides = 8
             const polyPoints = []
             for (let i = 0; i < sides; i++) {
                 const angle = (i * 2 * Math.PI) / sides - Math.PI/2
-                polyPoints.push({x: size * Math.cos(angle), y: size * Math.sin(angle)})
+                polyPoints.push({x: 400 * Math.cos(angle), y: 400 * Math.sin(angle)})
             }
             // 内联绘制逻辑
             if (polyPoints.length >= 3) {
@@ -148,18 +146,17 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
                     const nextP = polyPoints[(i + 1) % len]
                     const nextMidX = (p.x + nextP.x) / 2
                     const nextMidY = (p.y + nextP.y) / 2
-                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, 60)
+                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, 125)
                     ctx.lineTo(nextMidX, nextMidY)
                 }
                 ctx.closePath()
             }
             break
             
-        case ShapeType.star4: // Diamond
+        case ShapeType.四角星: // Diamond
             const s4Points = []
-            const s4Inner = size * 0.65
             for(let i=0; i<8; i++) {
-                const rad = i%2===0 ? size : s4Inner
+                const rad = i%2===0 ? 420 : 180
                 const a = i * Math.PI/4 - Math.PI/2
                 s4Points.push({x: rad*Math.cos(a), y: rad*Math.sin(a)})
             }
@@ -176,7 +173,7 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
                     const nextP = s4Points[(i + 1) % len]
                     const nextMidX = (p.x + nextP.x) / 2
                     const nextMidY = (p.y + nextP.y) / 2
-                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, 40)
+                    ctx.arcTo(p.x, p.y, nextMidX, nextMidY, (i % 2 === 0) ? 40 : 150)
                     ctx.lineTo(nextMidX, nextMidY)
                 }
                 ctx.closePath()
@@ -219,12 +216,12 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
             
         case ShapeType.七角:
             const petals = 7
-            const valleyR = size * 1
-            const peakR = size * 1.3
+            const valleyR = 300 * 1
+            const peakR = 300 * 1.3
             const step = Math.PI / petals // 22.5度
 
             // 使用三次贝塞尔曲线拟合余弦波，既保证绝对光滑，又还原圆润形状
-            const handleLen = size * 0.15
+            const handleLen = 300 * 0.15
 
             ctx.moveTo(valleyR, 0)
             
@@ -256,23 +253,21 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
             break
 
         case ShapeType.四叶草:
-            // 四象限大波浪 (中心对称)
-            // 确保在任何角落露出的都是波浪
-            const wSize = size * 1.3
+            const w300 = 300 * 1.3
             const t = -1.5
-            ctx.moveTo(wSize, 0)
+            ctx.moveTo(w300, 0)
             // 四个象限的波浪曲线
-            ctx.bezierCurveTo(wSize, wSize*t, wSize*t, wSize, 0, wSize)
-            ctx.bezierCurveTo(-wSize*t, wSize, -wSize, wSize*t, -wSize, 0)
-            ctx.bezierCurveTo(-wSize, -wSize*t, -wSize*t, -wSize, 0, -wSize)
-            ctx.bezierCurveTo(wSize*t, -wSize, wSize, -wSize*t, wSize, 0)
+            ctx.bezierCurveTo(w300, w300*t, w300*t, w300, 0, w300)
+            ctx.bezierCurveTo(-w300*t, w300, -w300, w300*t, -w300, 0)
+            ctx.bezierCurveTo(-w300, -w300*t, -w300*t, -w300, 0, -w300)
+            ctx.bezierCurveTo(w300*t, -w300, w300, -w300*t, w300, 0)
             ctx.closePath()
             break
             
-        case ShapeType.scallop:
+        case ShapeType.鱼板形:
             const waveCount = 12
             for (let i = 0; i <= Math.PI * 2; i += 0.05) {
-                 const rad = size + (size * 0.1) * Math.sin(i * waveCount)
+                 const rad = 300 + (300 * 0.1) * Math.sin(i * waveCount)
                  const x = rad * Math.cos(i)
                  const y = rad * Math.sin(i)
                  if (i === 0) ctx.moveTo(x, y)
@@ -281,28 +276,20 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
             ctx.closePath()
             break
             
-        case ShapeType.shield:
-            ctx.moveTo(-size*0.7, -size*0.7)
-            ctx.lineTo(size*0.7, -size*0.7)
-            ctx.quadraticCurveTo(size*0.7, size*0.2, 0, size) 
-            ctx.quadraticCurveTo(-size*0.7, size*0.2, -size*0.7, -size*0.7)
-            ctx.closePath()
-            break
-            
-        case ShapeType.heart:
-             const hSize = size * 0.06
+        case ShapeType.心形:
+             const h300 = 300 * 0.06
              for(let t=0; t<Math.PI*2; t+=0.1) {
                  const x = 16 * Math.pow(Math.sin(t), 3)
                  const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t))
-                 if(t===0) ctx.moveTo(x*hSize, y*hSize); else ctx.lineTo(x*hSize, y*hSize)
+                 if(t===0) ctx.moveTo(x*h300, y*h300); else ctx.lineTo(x*h300, y*h300)
              }
              ctx.closePath()
              break
 
-        case ShapeType.clover:
+        case ShapeType.凹吐司面包形:
              const leaves = 4
              for (let i = 0; i <= Math.PI * 2; i += 0.05) {
-                 const rad = size * (0.8 + 0.2 * Math.cos(i * leaves))
+                 const rad = 350 * (0.9 + 0.2 * Math.cos(i * leaves))
                  const x = rad * Math.cos(i)
                  const y = rad * Math.sin(i)
                  if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y)
@@ -325,7 +312,7 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.translate(width/2, height/2)
     ddeegg += Math.PI * 0.001
     ctx.rotate(ddeegg)
-    drawPattern(ctx, { type: ShapeType.五角星, rotate: 0, rotateSpd: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
+    drawPattern(ctx, { type: ShapeType.鱼板形, rotate: 0, rotateSpd: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
     ctx.restore()
     
     // 上方
