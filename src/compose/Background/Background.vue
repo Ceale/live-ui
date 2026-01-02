@@ -60,7 +60,7 @@ onUnmounted(() => {
 
 <template>
     <canvas ref="canvas" id="bg-canvas"></canvas>
-        <div id="aaaa"></div>
+    <!-- <div id="aaaa"></div> -->
 </template>
 
 <style scoped>
@@ -74,7 +74,7 @@ onUnmounted(() => {
     pointer-events: none; /* 不阻挡点击事件 */
 }
 
-#aaaa {
+/* #aaaa {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -82,5 +82,5 @@ onUnmounted(() => {
     width: 700px;
     height: 700px;
     border: solid 5px rgba(0, 0, 0, 0.3);
-}
+} */
 </style>

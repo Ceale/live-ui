@@ -317,12 +317,12 @@ let ddeegg = 0
 export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
 
-    ctx.save()
-    ctx.translate(width/2, height/2)
-    ddeegg += Math.PI * 0.001
-    ctx.rotate(ddeegg)
-    drawPattern(ctx, { type: ShapeType.心形, rotate: 0, rotateSpd: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
-    ctx.restore()
+    // ctx.save()
+    // ctx.translate(width/2, height/2)
+    // ddeegg += Math.PI * 0.001
+    // ctx.rotate(ddeegg)
+    // drawPattern(ctx, { type: ShapeType.八边形, rotate: 0, rotateSpd: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
+    // ctx.restore()
     
     // 上方
     ctx.save()
