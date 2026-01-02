@@ -334,7 +334,8 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.save()
     ctx.translate(...data.shapeTopLg.offset)
     ctx.rotate(data.shapeTopLg.rotate)
-    ctx.globalAlpha = 0.1
+    ctx.scale(1.1, 1.1)
+    ctx.globalAlpha = 0.5
     drawPattern(ctx, data.shapeTopLg)
     ctx.restore()
 
@@ -342,7 +343,7 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.save()
     ctx.translate(...data.shapeTopSm.offset)
     ctx.rotate(data.shapeTopSm.rotate)
-    ctx.scale(1.2, 1.2)
+    ctx.scale(0.8, 0.8)
     ctx.globalAlpha = 1
     drawPattern(ctx, data.shapeTopSm)
     ctx.restore()
@@ -360,8 +361,8 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.save()
     ctx.translate(...data.shapeBottomLg.offset)
     ctx.rotate(data.shapeBottomLg.rotate)
-    ctx.scale(0.9, 0.9)
-    ctx.globalAlpha = 0.3
+    ctx.scale(1.2, 1.2)
+    ctx.globalAlpha = 0.5
     drawPattern(ctx, data.shapeBottomLg)
     ctx.restore()
 
@@ -369,7 +370,7 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.save()
     ctx.translate(...data.shapeBottomSm.offset)
     ctx.rotate(data.shapeBottomSm.rotate)
-    ctx.scale(1.1, 1.1)
+    ctx.scale(0.9, 0.9)
     ctx.globalAlpha = 1
     drawPattern(ctx, data.shapeBottomSm)
     ctx.restore()
