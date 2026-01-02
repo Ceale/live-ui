@@ -265,13 +265,33 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
             break
             
         case ShapeType.鱼板形:
-            const waveCount = 12
-            for (let i = 0; i <= Math.PI * 2; i += 0.05) {
-                 const rad = 300 + (300 * 0.1) * Math.sin(i * waveCount)
-                 const x = rad * Math.cos(i)
-                 const y = rad * Math.sin(i)
-                 if (i === 0) ctx.moveTo(x, y)
-                 else ctx.lineTo(x, y)
+            const fishWaves = 12
+            const fishStep = Math.PI / fishWaves
+            const fishValleyR = 345 * 0.9
+            const fishPeakR = 330 * 1.1
+            const fishHandleLen = 330 * 0.1
+
+            ctx.moveTo(fishValleyR, 0)
+            
+            for (let i = 0; i < fishWaves * 2; i++) {
+                const startAngle = i * fishStep
+                const endAngle = (i + 1) * fishStep
+                
+                const isValleyToPeak = i % 2 === 0
+                
+                const rStart = isValleyToPeak ? fishValleyR : fishPeakR
+                const rEnd = isValleyToPeak ? fishPeakR : fishValleyR
+                
+                const p2x = rEnd * Math.cos(endAngle)
+                const p2y = rEnd * Math.sin(endAngle)
+                
+                const cp1x = (rStart * Math.cos(startAngle)) - Math.sin(startAngle) * fishHandleLen
+                const cp1y = (rStart * Math.sin(startAngle)) + Math.cos(startAngle) * fishHandleLen
+
+                const cp2x = p2x + Math.sin(endAngle) * fishHandleLen
+                const cp2y = p2y - Math.cos(endAngle) * fishHandleLen
+                
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2x, p2y)
             }
             ctx.closePath()
             break
@@ -312,7 +332,7 @@ export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     ctx.translate(width/2, height/2)
     ddeegg += Math.PI * 0.001
     ctx.rotate(ddeegg)
-    drawPattern(ctx, { type: ShapeType.鱼板形, rotate: 0, rotateSpd: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
+    drawPattern(ctx, { type: ShapeType.心形, rotate: 0, rotateSpd: 0, offset: [0, 0], color: "rgba(0, 0, 0, 0.3)" })
     ctx.restore()
     
     // 上方
