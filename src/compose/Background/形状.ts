@@ -7,7 +7,7 @@ const strokeWidth = 2 // 描边宽度稍微细一点，适应小图形
 interface Shape {
     x: number
     y: number
-    type: "petal" | "leaf" | "circle" | "star" | "heart" | "cloud" | "polygon"
+    type: "花瓣" | "叶子" | "圆形" | "星星" | "爱心" | "云朵" | "多边形"
     size: number
     color: string
     rotation: number
@@ -35,7 +35,7 @@ export const init形状 = (ctx: CanvasRenderingContext2D) => {
 const resetShape = (ctx: CanvasRenderingContext2D, shape: Shape, isInit = false) => {
     const [ width, height ] = getCtxSize(ctx)
     
-    const type = ["petal", "leaf", "circle", "star", "heart", "cloud", "polygon"][Math.floor(random(0, 7))] as any
+    const type = ["花瓣", "叶子", "圆形", "星星", "爱心", "云朵", "多边形"][Math.floor(random(0, 7))] as any
     
     const newShape: Shape = {
         x: random(0, width),
@@ -49,7 +49,7 @@ const resetShape = (ctx: CanvasRenderingContext2D, shape: Shape, isInit = false)
         swayOffset: random(0, Math.PI * 2),
         swaySpeed: random(0.005, 0.02),
         swayAmp: random(0.5, 1.5),
-        polygonSides: type === "polygon" ? Math.floor(random(5, 8)) : undefined // 随机5-7边形
+        polygonSides: type === "多边形" ? Math.floor(random(5, 8)) : undefined // 随机5-7边形
     }
 
     if (isInit) {
@@ -100,7 +100,7 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
     ctx.beginPath()
     
     switch (shape.type) {
-        case "circle":
+        case "圆形":
             // 小圆点/泡泡
             ctx.arc(0, 0, shape.size / 2, 0, Math.PI * 2)
             ctx.fill()
@@ -112,7 +112,7 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
             ctx.fill()
             break
             
-        case "petal":
+        case "花瓣":
             // 花瓣形状 (贝塞尔曲线)
             // 底部尖，上部圆润
             const pSize = shape.size
@@ -129,7 +129,7 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
             ctx.stroke()
             break
             
-        case "leaf":
+        case "叶子":
             // 叶片形状 (两头尖，中间宽)
             const lSize = shape.size
             ctx.moveTo(0, lSize/2)
@@ -145,7 +145,7 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
             ctx.stroke()
             break
             
-        case "star":
+        case "星星":
             // 圆角四角星
             const r = shape.size / 2
             const inset = 0.45
@@ -167,7 +167,7 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
             ctx.stroke()
             break
 
-        case "heart":
+        case "爱心":
             const hSize = shape.size / 2
             // 绘制心形
             ctx.moveTo(0, hSize * 0.5)
@@ -182,7 +182,7 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
             ctx.fill()
             break
 
-        case "cloud":
+        case "云朵":
             const cW = shape.size * 0.8
             const cH = shape.size * 0.5
             // 简单的云朵：三个圆弧拼接
@@ -199,7 +199,7 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
             ctx.stroke()
             break
 
-        case "polygon":
+        case "多边形":
             const sides = shape.polygonSides || 6
             const pR = shape.size / 2
             ctx.moveTo(pR * Math.cos(0), pR * Math.sin(0))
