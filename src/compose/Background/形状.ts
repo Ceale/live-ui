@@ -1,44 +1,61 @@
 import { getCtxSize, random, randomColor } from "./util"
 
-const strokeColor = "#4A4A4A" // 粗描边颜色（深灰，比纯黑柔和）
-const strokeWidth = 3 // 描边宽度
-
-// 随机辅助函数
-
+const strokeColor = "#4A4A4A" // 粗描边颜色
+const strokeWidth = 2 // 描边宽度稍微细一点，适应小图形
 
 // 绘制形状
 interface Shape {
     x: number
     y: number
-    type: "circle" | "triangle" | "cross" | "square" | "wave"
+    type: "petal" | "leaf" | "circle" | "star" | "heart" | "cloud" | "polygon"
     size: number
     color: string
     rotation: number
-    speedX: number
-    speedY: number
+    speedY: number     // 上升速度
     rotationSpeed: number
+    swayOffset: number // 左右摇摆的相位偏移
+    swaySpeed: number  // 左右摇摆的速度
+    swayAmp: number    // 左右摇摆的幅度
+    polygonSides?: number // 多边形的边数（如果是 polygon 类型）
 }
 
 const shapes: Shape[] = []
 
-
-
 export const init形状 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
     shapes.length = 0 // Clear existing
-    const count = 30 // 图形数量
+    const count = 35 // 数量稍微减少一点点，因为图形变大了，避免太拥挤
     for (let i = 0; i < count; i++) {
-        shapes.push({
-            x: random(0, width),
-            y: random(0, height),
-            type: ["circle", "triangle", "cross", "square", "wave"][Math.floor(random(0, 5))] as any,
-            size: random(20, 50),
-            color: randomColor(),
-            rotation: random(0, Math.PI * 2),
-            speedX: random(-0.2, 0.2), // 极慢的漂浮速度
-            speedY: random(-0.2, 0.2),
-            rotationSpeed: random(-0.01, 0.01)
-        })
+        resetShape(ctx, {} as Shape, true) // 初始化，强制在底部下方
+        const shape = shapes[shapes.length - 1]
+        shape.y = height + random(0, height * 0.8) 
+    }
+}
+
+const resetShape = (ctx: CanvasRenderingContext2D, shape: Shape, isInit = false) => {
+    const [ width, height ] = getCtxSize(ctx)
+    
+    const type = ["petal", "leaf", "circle", "star", "heart", "cloud", "polygon"][Math.floor(random(0, 7))] as any
+    
+    const newShape: Shape = {
+        x: random(0, width),
+        y: height + random(20, 150),
+        type: type,
+        size: random(30, 60), // 增大尺寸
+        color: randomColor(),
+        rotation: random(0, Math.PI * 2),
+        speedY: random(0.3, 1.0), // 减慢速度，更加悠闲
+        rotationSpeed: random(-0.015, 0.015),
+        swayOffset: random(0, Math.PI * 2),
+        swaySpeed: random(0.005, 0.02),
+        swayAmp: random(0.5, 1.5),
+        polygonSides: type === "polygon" ? Math.floor(random(5, 8)) : undefined // 随机5-7边形
+    }
+
+    if (isInit) {
+        shapes.push(newShape)
+    } else {
+        Object.assign(shape, newShape)
     }
 }
 
@@ -46,15 +63,24 @@ export const draw形状 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
     shapes.forEach(shape => {
         // 更新位置
-        shape.x += shape.speedX
-        shape.y += shape.speedY
+        shape.y -= shape.speedY // 向上运动
+        
+        // 左右摇摆
+        shape.swayOffset += shape.swaySpeed
+        shape.x += Math.sin(shape.swayOffset) * shape.swayAmp
+        
         shape.rotation += shape.rotationSpeed
 
-        // 边界检查（环绕）
-        if (shape.x < -100) shape.x = width + 100
-        if (shape.x > width + 100) shape.x = -100
-        if (shape.y < -100) shape.y = height + 100
-        if (shape.y > height + 100) shape.y = -100
+        // 边界检查：完全超出屏幕上方后，重置到底部
+        if (shape.y < -50) {
+            resetShape(ctx, shape)
+        }
+        
+        // 左右边界检查：如果飘出去了，从另一边回来，或者重置？
+        // 既然是粒子发射，飘出左右边界不太常见，除非幅度很大。
+        // 这里做一个简单的 wrap 处理，或者让它继续飘直到超出上方
+        if (shape.x < -50) shape.x = width + 50
+        if (shape.x > width + 50) shape.x = -50
 
         drawSingleShape(ctx, shape)
     })
@@ -75,42 +101,113 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
     
     switch (shape.type) {
         case "circle":
+            // 小圆点/泡泡
             ctx.arc(0, 0, shape.size / 2, 0, Math.PI * 2)
             ctx.fill()
             ctx.stroke()
+            // 加个高光让它像泡泡
+            ctx.beginPath()
+            ctx.fillStyle = "rgba(255,255,255,0.6)"
+            ctx.arc(-shape.size/6, -shape.size/6, shape.size/8, 0, Math.PI*2)
+            ctx.fill()
             break
-        case "square":
-            ctx.rect(-shape.size / 2, -shape.size / 2, shape.size, shape.size)
+            
+        case "petal":
+            // 花瓣形状 (贝塞尔曲线)
+            // 底部尖，上部圆润
+            const pSize = shape.size
+            ctx.moveTo(0, pSize/2)
+            ctx.bezierCurveTo(pSize/2, pSize/4, pSize/2, -pSize/2, 0, -pSize/2)
+            ctx.bezierCurveTo(-pSize/2, -pSize/2, -pSize/2, pSize/4, 0, pSize/2)
             ctx.fill()
             ctx.stroke()
+            // 加一条中间的纹理
+            ctx.beginPath()
+            ctx.moveTo(0, pSize/2)
+            ctx.lineTo(0, 0)
+            ctx.lineWidth = 1
+            ctx.stroke()
             break
-        case "triangle":
-            ctx.moveTo(0, -shape.size / 2)
-            ctx.lineTo(shape.size / 2, shape.size / 2)
-            ctx.lineTo(-shape.size / 2, shape.size / 2)
+            
+        case "leaf":
+            // 叶片形状 (两头尖，中间宽)
+            const lSize = shape.size
+            ctx.moveTo(0, lSize/2)
+            ctx.quadraticCurveTo(lSize/2, 0, 0, -lSize/2)
+            ctx.quadraticCurveTo(-lSize/2, 0, 0, lSize/2)
+            ctx.fill()
+            ctx.stroke()
+             // 叶脉
+            ctx.beginPath()
+            ctx.moveTo(0, lSize/2)
+            ctx.lineTo(0, -lSize/2)
+            ctx.lineWidth = 1
+            ctx.stroke()
+            break
+            
+        case "star":
+            // 圆角四角星
+            const r = shape.size / 2
+            const inset = 0.45
+            ctx.moveTo(0, -r)
+            for (let i = 0; i < 8; i++) {
+                const angle = ((i + 1) * Math.PI) / 4 - Math.PI / 2
+                const radius = (i % 2 === 0) ? r * inset : r
+                // 使用简单的直线连接，保持几何感但因为size变大，圆角会显得太圆，
+                // 这里我们做微小的圆角处理
+                const nextAngle = ((i + 2) * Math.PI) / 4 - Math.PI / 2
+                const nextRadius = ((i + 1) % 2 === 0) ? r * inset : r
+                
+                // 简单的圆角星：在顶点处使用 arcTo 或者贝塞尔
+                // 这里为了保持风格统一，还是用简单的直线，但是可以通过 lineJoin="round" (已设置) 来获得圆角
+                ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius)
+            }
             ctx.closePath()
             ctx.fill()
             ctx.stroke()
             break
-        case "cross":
-            const s = shape.size / 2
-            const w = shape.size / 6
-            ctx.moveTo(-w, -s); ctx.lineTo(w, -s); ctx.lineTo(w, -w);
-            ctx.lineTo(s, -w); ctx.lineTo(s, w); ctx.lineTo(w, w);
-            ctx.lineTo(w, s); ctx.lineTo(-w, s); ctx.lineTo(-w, w);
-            ctx.lineTo(-s, w); ctx.lineTo(-s, -w); ctx.lineTo(-w, -w);
+
+        case "heart":
+            const hSize = shape.size / 2
+            // 绘制心形
+            ctx.moveTo(0, hSize * 0.5)
+            ctx.bezierCurveTo(hSize, -hSize * 0.5, hSize * 2, hSize, 0, hSize * 2)
+            ctx.bezierCurveTo(-hSize * 2, hSize, -hSize, -hSize * 0.5, 0, hSize * 0.5)
+            ctx.fill()
+            ctx.stroke()
+            // 加个高光
+            ctx.beginPath()
+            ctx.fillStyle = "rgba(255,255,255,0.4)"
+            ctx.arc(-hSize/2, hSize/2, hSize/4, 0, Math.PI*2)
+            ctx.fill()
+            break
+
+        case "cloud":
+            const cW = shape.size * 0.8
+            const cH = shape.size * 0.5
+            // 简单的云朵：三个圆弧拼接
+            ctx.moveTo(-cW/2, cH/2)
+            ctx.lineTo(cW/2, cH/2)
+            // 右圆
+            ctx.arc(cW/2 - cH/2, 0, cH/2, Math.PI/2, -Math.PI/2, true)
+            // 上圆 (稍微大一点)
+            ctx.arc(0, -cH/2, cH * 0.7, 0, Math.PI, true)
+            // 左圆
+            ctx.arc(-cW/2 + cH/2, 0, cH/2, -Math.PI/2, Math.PI/2, true)
             ctx.closePath()
             ctx.fill()
             ctx.stroke()
             break
-        case "wave":
-             // 简单的波浪线或之字形
-            const waveWidth = shape.size
-            const waveHeight = shape.size / 3
-            ctx.moveTo(-waveWidth/2, 0)
-            ctx.bezierCurveTo(-waveWidth/4, -waveHeight, waveWidth/4, waveHeight, waveWidth/2, 0)
-            ctx.strokeStyle = shape.color // 波浪线用彩色描边
-            ctx.lineWidth = 5
+
+        case "polygon":
+            const sides = shape.polygonSides || 6
+            const pR = shape.size / 2
+            ctx.moveTo(pR * Math.cos(0), pR * Math.sin(0))
+            for (let i = 1; i <= sides; i++) {
+                ctx.lineTo(pR * Math.cos(i * 2 * Math.PI / sides), pR * Math.sin(i * 2 * Math.PI / sides))
+            }
+            ctx.closePath()
+            ctx.fill()
             ctx.stroke()
             break
     }
