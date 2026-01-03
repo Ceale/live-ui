@@ -18,6 +18,37 @@ interface Shape {
 
 const shapes: Shape[] = []
 
+// 全局风力参数
+let currentWindX = 0
+let currentWindY = 0
+let targetWindX = 0
+let targetWindY = 0
+let windChangeSpeed = 0.005 // 缓动系数，控制风力变化速度
+const windCheckInterval = 200 // 每隔多少帧检查是否达到目标风力（或者直接判断接近程度）
+
+// 辅助函数：缓动逼近
+const lerp = (start: number, end: number, t: number) => {
+    return start * (1 - t) + end * t
+}
+
+// 重新随机风力目标
+const randomizeWindTarget = () => {
+    // 之前用了您举例的数值（-1~4, -3~-6），导致速度过快（向上飞出去了）。
+    // 现在调整为更合理的微风范围，保持画面的悠闲感。
+    
+    // X轴风力：-1 到 1 之间随机，表示左右轻微飘动
+    targetWindX = random(-1, 1)
+    
+    // Y轴风力：-0.5 到 0.5 之间随机，表示垂直方向的气流波动
+    // 负数会加速向上，正数会减缓上升（阻力）
+    targetWindY = random(-0.5, 0.5)
+}
+
+// 初始化风力
+randomizeWindTarget()
+currentWindX = targetWindX
+currentWindY = targetWindY
+
 // 计时器引用，用于清理
 let emitTimer: number | null = null
 let updateTimer: number | null = null
@@ -28,10 +59,15 @@ export const init形状 = (ctx: CanvasRenderingContext2D) => {
     if (updateTimer) clearInterval(updateTimer)
     shapes.length = 0
 
+    // 初始化风力
+    randomizeWindTarget()
+    currentWindX = targetWindX
+    currentWindY = targetWindY
+
     // 启动发射器：每 300ms 发射一个新粒子
     emitTimer = window.setInterval(() => {
-        newShape(ctx)
-    }, 1000)
+        emitShape(ctx)
+    }, 300)
 
     // 启动更新器：每 16ms (约60fps) 更新一次所有粒子位置
     updateTimer = window.setInterval(() => {
@@ -40,19 +76,22 @@ export const init形状 = (ctx: CanvasRenderingContext2D) => {
 }
 
 // 发射单个粒子
-const newShape = (ctx: CanvasRenderingContext2D) => {
+const emitShape = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
+    
+    // 如果粒子太多，暂时停止发射，防止内存溢出或卡顿
+    if (shapes.length > 100) return 
 
     const type = ["圆形", "星星"][Math.floor(random(0, 2))] as any
     
     const newShape: Shape = {
-        x: random(-50, width),
+        x: random(0, width),
         y: height + 60, // 从屏幕底部下方发射
         type: type,
-        size: random(35, 50),
+        size: random(30, 60),
         color: randomColor(),
         rotation: random(0, Math.PI * 2),
-        speedY: random(0.3, 1.0),
+        speedY: random(0.3, 1.0), // 粒子的基础上升速度（依然保留一点个体差异）
         rotationSpeed: random(-0.015, 0.015),
         swayOffset: random(0, Math.PI * 2),
         swaySpeed: random(0.005, 0.02),
@@ -63,34 +102,48 @@ const newShape = (ctx: CanvasRenderingContext2D) => {
     shapes.push(newShape)
 }
 
-
-// 全局风力参数
-let globalWind = 0
-let windTime = 0
-
 // 更新所有粒子状态
 const updateShapes = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
 
-    // 更新全局风力
-    windTime += 0.002
-    globalWind = 0.4 + Math.sin(windTime) * 0.2
-    
+    // 1. 更新全局风力（缓动逼近目标）
+    // 使用 lerp 进行平滑过渡
+    // 这里的 windChangeSpeed 决定了“慢慢靠近”的速度
+    currentWindX = lerp(currentWindX, targetWindX, windChangeSpeed)
+    currentWindY = lerp(currentWindY, targetWindY, windChangeSpeed)
+
+    // 2. 检查是否到达目标（接近到一定程度），如果到达则随机新的目标
+    if (Math.abs(currentWindX - targetWindX) < 0.1 && Math.abs(currentWindY - targetWindY) < 0.1) {
+        randomizeWindTarget()
+    }
+
     // 倒序遍历以便安全移除
     for (let i = shapes.length - 1; i >= 0; i--) {
         const shape = shapes[i]
         
         // 更新位置
-        shape.y -= shape.speedY
+        // 粒子的最终位移 = 基础上升速度(speedY) + 全局风力(currentWindY)
+        // 注意：基础 speedY 是正数，逻辑是 y -= speedY。
+        // 风力 currentWindY 是负数（向上），如果直接加到坐标上应该是 y += currentWindY。
+        // 为了统一，我们让 y += (向上风力 + 基础向上速度的负值)
+        // 但简单点写：
+        shape.y -= shape.speedY // 基础向上
+        shape.y += currentWindY // 风力叠加（currentWindY是负数，所以是加速向上）
         
+        // X轴
         shape.swayOffset += shape.swaySpeed
         const individualSway = Math.sin(shape.swayOffset) * shape.swayAmp
-        shape.x += individualSway + globalWind
+        shape.x += individualSway + currentWindX
         
         shape.rotation += shape.rotationSpeed
 
         // 边界检查：如果完全超出屏幕上方，则销毁
-        if (shape.y < -100 || shape.x < -150 || shape.x > width + 150) {
+        if (shape.y < -100) {
+            shapes.splice(i, 1)
+            continue
+        }
+        
+        if (shape.x < -150 || shape.x > width + 150) {
             shapes.splice(i, 1)
         }
     }
