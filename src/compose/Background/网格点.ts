@@ -20,10 +20,31 @@ interface Zone {
     name?: string
     // 调试用绘制边界
     drawBorder?: (ctx: CanvasRenderingContext2D) => void
+    // 调试用绘制渐变方向
+    drawDirection?: (ctx: CanvasRenderingContext2D) => void
 }
 
 // 模块级状态，存储当前生成的区域
 let currentZones: Zone[] = []
+
+// 辅助函数：绘制箭头
+const drawArrow = (ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, length: number = 60) => {
+    const toX = x + Math.cos(angle) * length
+    const toY = y + Math.sin(angle) * length
+    
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(toX, toY)
+    
+    // 箭头头部
+    const headLen = 15
+    const headAngle = Math.PI / 6
+    ctx.lineTo(toX - headLen * Math.cos(angle - headAngle), toY - headLen * Math.sin(angle - headAngle))
+    ctx.moveTo(toX, toY)
+    ctx.lineTo(toX - headLen * Math.cos(angle + headAngle), toY - headLen * Math.sin(angle + headAngle))
+    
+    ctx.stroke()
+}
 
 // 初始化/重置网格点配置
 export const init网格点 = (ctx: CanvasRenderingContext2D) => {
@@ -60,6 +81,17 @@ export const init网格点 = (ctx: CanvasRenderingContext2D) => {
     const angle1 = random(0, Math.PI * 2)
     const angle2 = random(0, Math.PI * 2)
 
+    // 计算法向量方向，用于寻找区域内的点
+    const dx = p2.x - p1.x
+    const dy = p2.y - p1.y
+    const len = Math.sqrt(dx*dx + dy*dy)
+    const nx = -dy / len
+    const ny = dx / len
+    
+    const midX = (p1.x + p2.x) / 2
+    const midY = (p1.y + p2.y) / 2
+    const offset = 100 // 偏移量
+
     // 区域 1: 直线的一侧
     currentZones.push({
         name: 'Base 1',
@@ -71,6 +103,12 @@ export const init网格点 = (ctx: CanvasRenderingContext2D) => {
             ctx.moveTo(p1.x, p1.y)
             ctx.lineTo(p2.x, p2.y)
             ctx.stroke()
+        },
+        drawDirection: (ctx) => {
+             // 沿着法向量正方向偏移
+             const cx = midX + nx * offset
+             const cy = midY + ny * offset
+             drawArrow(ctx, cx, cy, angle1)
         }
     })
 
@@ -79,8 +117,14 @@ export const init网格点 = (ctx: CanvasRenderingContext2D) => {
         name: 'Base 2',
         type: pattern2,
         contains: (x, y) => A * x + B * y + C <= 0,
-        getSizeScale: createLinearGradientScale(width, height, angle2)
+        getSizeScale: createLinearGradientScale(width, height, angle2),
         // 区域2不需要画线，因为线是共享的
+        drawDirection: (ctx) => {
+             // 沿着法向量负方向偏移
+             const cx = midX - nx * offset
+             const cy = midY - ny * offset
+             drawArrow(ctx, cx, cy, angle2)
+        }
     })
 
     // 2. 生成装饰层 (Decoration Layer) - 小块覆盖
@@ -110,6 +154,9 @@ export const init网格点 = (ctx: CanvasRenderingContext2D) => {
                     ctx.beginPath()
                     ctx.arc(cx, cy, r, 0, Math.PI * 2)
                     ctx.stroke()
+                },
+                drawDirection: (ctx) => {
+                    drawArrow(ctx, cx, cy, angle)
                 }
             })
         } else {
@@ -134,6 +181,9 @@ export const init网格点 = (ctx: CanvasRenderingContext2D) => {
                     ctx.lineTo(cx - size, cy)
                     ctx.closePath()
                     ctx.stroke()
+                },
+                drawDirection: (ctx) => {
+                    drawArrow(ctx, cx, cy, angle)
                 }
             })
         }
@@ -209,6 +259,8 @@ export const draw网格点 = (ctx: CanvasRenderingContext2D) => {
     // 调试：绘制边界
     if (显示边界) {
         ctx.save()
+        
+        // 绘制红色边界
         ctx.strokeStyle = "red"
         ctx.lineWidth = 3
         ctx.lineJoin = "round"
@@ -217,6 +269,17 @@ export const draw网格点 = (ctx: CanvasRenderingContext2D) => {
                 zone.drawBorder(ctx)
             }
         })
+
+        // 绘制蓝色方向
+        ctx.strokeStyle = "blue"
+        ctx.lineWidth = 5
+        ctx.lineCap = "round"
+        currentZones.forEach(zone => {
+            if (zone.drawDirection) {
+                zone.drawDirection(ctx)
+            }
+        })
+
         ctx.restore()
     }
 }
