@@ -13,6 +13,10 @@ const MAX_SHAPE_SIZE = 40 // 增大最大尺寸
 const MIN_SHAPE_SIZE = 6 
 const NORMAL_MAX_SIZE = 28 // 正常尺寸上限 (超过此值开始透明)
 
+// 离屏 Canvas 缓存
+let offscreenCanvas: HTMLCanvasElement | null = null
+let offscreenCtx: CanvasRenderingContext2D | null = null
+
 // 区域定义
 interface Zone {
     // 判断点是否在区域内
@@ -57,6 +61,21 @@ const drawArrow = (ctx: CanvasRenderingContext2D, x: number, y: number, angle: n
 export const init网格点 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
     currentZones = []
+    
+    // 每次初始化时，重新创建或调整离屏 Canvas
+    if (!offscreenCanvas) {
+        offscreenCanvas = document.createElement('canvas')
+        offscreenCtx = offscreenCanvas.getContext('2d')!
+    }
+    
+    // 确保离屏 Canvas 尺寸与主 Canvas 一致
+    if (offscreenCanvas.width !== width || offscreenCanvas.height !== height) {
+        offscreenCanvas.width = width
+        offscreenCanvas.height = height
+    }
+    
+    // 清空离屏 Canvas
+    offscreenCtx!.clearRect(0, 0, width, height)
 
     // 1. 生成基础层 (Base Layer) - 大块分区
     // 策略：随机选择 1-2 条分割线
@@ -294,6 +313,9 @@ export const init网格点 = (ctx: CanvasRenderingContext2D) => {
             })
         }
     }
+
+    // === 性能优化：执行静态预渲染 ===
+    renderToOffscreen(offscreenCtx!, width, height)
 }
 
 // 辅助：画直线 Ax+By+C=0
@@ -327,15 +349,10 @@ const createLinearGradientScale = (w: number, h: number, angle: number) => {
     }
 }
 
-// 绘制网格点背景 (Halftone Pattern)
-export const draw网格点 = (ctx: CanvasRenderingContext2D) => {
+// 离屏渲染核心逻辑 (只执行一次)
+const renderToOffscreen = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     const patternColor = "rgba(72, 72, 72, 0.05)" // 用户修改后的颜色
-    const [ width, height ] = getCtxSize(ctx)
     
-    if (currentZones.length === 0) {
-        init网格点(ctx)
-    }
-
     // 网格设置
     const GRID_SIZE = 26 
 
@@ -360,7 +377,6 @@ export const draw网格点 = (ctx: CanvasRenderingContext2D) => {
                 // 处理透明度逻辑
                 if (size > NORMAL_MAX_SIZE) {
                     // 超过正常范围，降低透明度
-                    // 假设降低到 40%
                     const extra = size - NORMAL_MAX_SIZE
                     const maxExtra = MAX_SHAPE_SIZE - NORMAL_MAX_SIZE
                     const opacityFactor = 1 - (extra / maxExtra) * 0.6 // 1.0 -> 0.4
@@ -382,6 +398,19 @@ export const draw网格点 = (ctx: CanvasRenderingContext2D) => {
         ctx.strokeStyle = "blue"; ctx.lineWidth = 5; ctx.lineCap = "round"
         currentZones.forEach(zone => zone.drawDirection && zone.drawDirection(ctx))
         ctx.restore()
+    }
+}
+
+// 绘制网格点背景 (Halftone Pattern) - 优化版：直接绘制离屏缓存
+export const draw网格点 = (ctx: CanvasRenderingContext2D) => {
+    // 确保已初始化
+    if (!offscreenCanvas || currentZones.length === 0) {
+        init网格点(ctx)
+    }
+
+    // 直接拷贝离屏 Canvas (极快)
+    if (offscreenCanvas) {
+        ctx.drawImage(offscreenCanvas, 0, 0)
     }
 }
 

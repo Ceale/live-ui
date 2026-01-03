@@ -7,10 +7,26 @@ interface Spot {
 
 let spots: Spot[] = []
 
+// 离屏 Canvas 缓存
+let offscreenCanvas: HTMLCanvasElement | null = null
+let offscreenCtx: CanvasRenderingContext2D | null = null
+
 export const init背景 = (ctx: CanvasRenderingContext2D) => {
     const { width, height } = ctx.canvas
     spots = []
     
+    // 每次初始化时，重新创建或调整离屏 Canvas
+    if (!offscreenCanvas) {
+        offscreenCanvas = document.createElement('canvas')
+        offscreenCtx = offscreenCanvas.getContext('2d')!
+    }
+    
+    // 确保离屏 Canvas 尺寸与主 Canvas 一致
+    if (offscreenCanvas.width !== width || offscreenCanvas.height !== height) {
+        offscreenCanvas.width = width
+        offscreenCanvas.height = height
+    }
+
     // 增加斑点数量，制造更丰富的色彩流动感
     const count = 12 + Math.random() * 8 
     
@@ -52,11 +68,12 @@ export const init背景 = (ctx: CanvasRenderingContext2D) => {
             color: `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`
         })
     }
+
+    // 执行离屏渲染
+    renderToOffscreen(offscreenCtx!, width, height)
 }
 
-export const draw背景 = (ctx: CanvasRenderingContext2D) => {
-    const { width, height } = ctx.canvas
-
+const renderToOffscreen = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     // 基础底色：使用极淡的暖白，给色彩提供画布
     ctx.fillStyle = "#FFFAF0"
     ctx.fillRect(0, 0, width, height)
@@ -73,4 +90,15 @@ export const draw背景 = (ctx: CanvasRenderingContext2D) => {
         ctx.arc(spot.x, spot.y, spot.radius, 0, Math.PI * 2)
         ctx.fill()
     })
+}
+
+export const draw背景 = (ctx: CanvasRenderingContext2D) => {
+    // 确保已初始化
+    if (!offscreenCanvas || spots.length === 0) {
+        init背景(ctx)
+    }
+
+    if (offscreenCanvas) {
+        ctx.drawImage(offscreenCanvas, 0, 0)
+    }
 }
