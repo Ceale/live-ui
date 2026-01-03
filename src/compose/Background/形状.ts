@@ -22,76 +22,97 @@ const shapes: Shape[] = []
 let globalWind = 0
 let windTime = 0
 
+// 计时器引用，用于清理
+let emitTimer: number | null = null
+let updateTimer: number | null = null
+
 export const init形状 = (ctx: CanvasRenderingContext2D) => {
-    const [ width, height ] = getCtxSize(ctx)
-    const count = 35 // 数量稍微减少一点点，因为图形变大了，避免太拥挤
-    for (let i = 0; i < count; i++) {
-        resetShape(ctx, {} as Shape, true) // 初始化，强制在底部下方
-        const shape = shapes[shapes.length - 1]
-        shape.y = height + random(0, height * 0.8) 
-    }
+    // 清理旧的定时器和数据
+    if (emitTimer) clearInterval(emitTimer)
+    if (updateTimer) clearInterval(updateTimer)
+    shapes.length = 0
+
+    // 启动发射器：每 300ms 发射一个新粒子
+    emitTimer = window.setInterval(() => {
+        emitShape(ctx)
+    }, 300)
+
+    // 启动更新器：每 16ms (约60fps) 更新一次所有粒子位置
+    updateTimer = window.setInterval(() => {
+        updateShapes(ctx)
+    }, 16)
 }
 
-const resetShape = (ctx: CanvasRenderingContext2D, shape: Shape, isInit = false) => {
+// 发射单个粒子
+const emitShape = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
     
+    // 如果粒子太多，暂时停止发射，防止内存溢出或卡顿
+    if (shapes.length > 100) return 
+
     const type = ["圆形", "星星"][Math.floor(random(0, 2))] as any
     
     const newShape: Shape = {
         x: random(0, width),
-        y: height + random(20, 150),
+        y: height + 60, // 从屏幕底部下方发射
         type: type,
-        size: random(30, 60), // 增大尺寸
+        size: random(30, 60),
         color: randomColor(),
         rotation: random(0, Math.PI * 2),
-        speedY: random(0.3, 1.0), // 减慢速度，更加悠闲
+        speedY: random(0.3, 1.0),
         rotationSpeed: random(-0.015, 0.015),
         swayOffset: random(0, Math.PI * 2),
         swaySpeed: random(0.005, 0.02),
         swayAmp: random(0.5, 1.5),
         polygonSides: undefined 
     }
-
-    if (isInit) {
-        shapes.push(newShape)
-    } else {
-        Object.assign(shape, newShape)
-    }
+    
+    shapes.push(newShape)
 }
 
-export const draw形状 = (ctx: CanvasRenderingContext2D) => {
+// 更新所有粒子状态
+const updateShapes = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
-    
-    // 更新全局风力：平稳的微风
-    windTime += 0.002 // 变化非常缓慢
-    // 持续向一个方向（向右）吹拂，避免左右来回摆动
-    // 基础风力 0.4，叠加微弱的波动，保持风向一致
+
+    // 更新全局风力
+    windTime += 0.002
     globalWind = 0.4 + Math.sin(windTime) * 0.2
     
-    shapes.forEach(shape => {
-        // 更新位置
-        shape.y -= shape.speedY // 向上运动
+    // 倒序遍历以便安全移除
+    for (let i = shapes.length - 1; i >= 0; i--) {
+        const shape = shapes[i]
         
-        // 左右摇摆：个体摇摆 + 全局风力
+        // 更新位置
+        shape.y -= shape.speedY
+        
         shape.swayOffset += shape.swaySpeed
-        // 个体摇摆
         const individualSway = Math.sin(shape.swayOffset) * shape.swayAmp
-        // 最终 X 轴位移
         shape.x += individualSway + globalWind
         
         shape.rotation += shape.rotationSpeed
 
-        // 边界检查：完全超出屏幕上方后，重置到底部
-        if (shape.y < -50) {
-            resetShape(ctx, shape)
+        // 边界检查：如果完全超出屏幕上方，则销毁
+        if (shape.y < -100) {
+            shapes.splice(i, 1)
+            continue
         }
-    
-        // 左右边界检查：如果飘出去了，从另一边回来，或者重置？
-        // 既然是粒子发射，飘出左右边界不太常见，除非幅度很大。
-        // 这里做一个简单的 wrap 处理，或者让它继续飘直到超出上方
-        if (shape.x < -50) shape.x = width + 50
-        if (shape.x > width + 50) shape.x = -50
+        
+        // 左右边界检查：保持 wrap 效果，或者也可以选择销毁
+        // 这里为了视觉连续性，保持 wrap 效果比较好，或者让它自然飘出去销毁也可以
+        // 既然要求是“超出边界后销毁”，那我们严格执行销毁逻辑？
+        // 但考虑到左右风力，wrap 可能更好看。不过根据用户指令“超出边界后销毁”，
+        // 我们可以定义为：超出上方销毁。左右如果飘出去了，为了不让屏幕空荡荡，通常做法是 wrap。
+        // 但如果严格执行“超出边界销毁”，那左右飘出也应该销毁。
+        // 这里我采取折中方案：上方超出必定销毁。左右超出如果太远也销毁。
+        if (shape.x < -150 || shape.x > width + 150) {
+            shapes.splice(i, 1)
+        }
+    }
+}
 
+// 只负责绘制
+export const draw形状 = (ctx: CanvasRenderingContext2D) => {
+    shapes.forEach(shape => {
         drawSingleShape(ctx, shape)
     })
 }
