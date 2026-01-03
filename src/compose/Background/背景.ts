@@ -7,7 +7,7 @@ interface Spot {
 
 let spots: Spot[] = []
 
-export const initBackground = (ctx: CanvasRenderingContext2D) => {
+export const init背景 = (ctx: CanvasRenderingContext2D) => {
     const { width, height } = ctx.canvas
     spots = []
     
@@ -54,7 +54,7 @@ export const initBackground = (ctx: CanvasRenderingContext2D) => {
     }
 }
 
-export const drawBackground = (ctx: CanvasRenderingContext2D) => {
+export const draw背景 = (ctx: CanvasRenderingContext2D) => {
     const { width, height } = ctx.canvas
 
     // 基础底色：使用极淡的暖白，给色彩提供画布

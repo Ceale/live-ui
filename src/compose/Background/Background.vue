@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, useTemplateRef } from "vue"
-import { drawBackground as draw背景, initBackground as init背景 } from "./背景"
+import { draw背景, init背景 } from "./背景"
 import { getCtxSize } from "./util"
 import { draw网格点 } from "./网格点"
 import { draw背景图形, init背景图形 } from "./背景图形"
