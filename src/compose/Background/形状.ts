@@ -7,7 +7,7 @@ const strokeWidth = 2 // 描边宽度稍微细一点，适应小图形
 interface Shape {
     x: number
     y: number
-    type: "花瓣" | "叶子" | "圆形" | "星星" | "爱心" | "云朵" | "多边形"
+    type: "圆形" | "星星"
     size: number
     color: string
     rotation: number
@@ -39,7 +39,7 @@ export const init形状 = (ctx: CanvasRenderingContext2D) => {
 const resetShape = (ctx: CanvasRenderingContext2D, shape: Shape, isInit = false) => {
     const [ width, height ] = getCtxSize(ctx)
     
-    const type = ["花瓣", "叶子", "圆形", "星星", "爱心", "云朵", "多边形"][Math.floor(random(0, 7))] as any
+    const type = ["圆形", "星星"][Math.floor(random(0, 2))] as any
     
     const newShape: Shape = {
         x: random(0, width),
@@ -53,7 +53,7 @@ const resetShape = (ctx: CanvasRenderingContext2D, shape: Shape, isInit = false)
         swayOffset: random(0, Math.PI * 2),
         swaySpeed: random(0.005, 0.02),
         swayAmp: random(0.5, 1.5),
-        polygonSides: type === "多边形" ? Math.floor(random(5, 8)) : undefined // 随机5-7边形
+        polygonSides: undefined 
     }
 
     if (isInit) {
@@ -126,39 +126,6 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
             ctx.fill()
             break
             
-        case "花瓣":
-            // 花瓣形状 (贝塞尔曲线)
-            // 底部尖，上部圆润
-            const pSize = shape.size
-            ctx.moveTo(0, pSize/2)
-            ctx.bezierCurveTo(pSize/2, pSize/4, pSize/2, -pSize/2, 0, -pSize/2)
-            ctx.bezierCurveTo(-pSize/2, -pSize/2, -pSize/2, pSize/4, 0, pSize/2)
-            ctx.fill()
-            ctx.stroke()
-            // 加一条中间的纹理
-            ctx.beginPath()
-            ctx.moveTo(0, pSize/2)
-            ctx.lineTo(0, 0)
-            ctx.lineWidth = 1
-            ctx.stroke()
-            break
-            
-        case "叶子":
-            // 叶片形状 (两头尖，中间宽)
-            const lSize = shape.size
-            ctx.moveTo(0, lSize/2)
-            ctx.quadraticCurveTo(lSize/2, 0, 0, -lSize/2)
-            ctx.quadraticCurveTo(-lSize/2, 0, 0, lSize/2)
-            ctx.fill()
-            ctx.stroke()
-             // 叶脉
-            ctx.beginPath()
-            ctx.moveTo(0, lSize/2)
-            ctx.lineTo(0, -lSize/2)
-            ctx.lineWidth = 1
-            ctx.stroke()
-            break
-            
         case "星星":
             // 圆角四角星
             const r = shape.size / 2
@@ -175,50 +142,6 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
                 // 简单的圆角星：在顶点处使用 arcTo 或者贝塞尔
                 // 这里为了保持风格统一，还是用简单的直线，但是可以通过 lineJoin="round" (已设置) 来获得圆角
                 ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius)
-            }
-            ctx.closePath()
-            ctx.fill()
-            ctx.stroke()
-            break
-
-        case "爱心":
-            const hSize = shape.size / 2
-            // 绘制心形
-            ctx.moveTo(0, hSize * 0.5)
-            ctx.bezierCurveTo(hSize, -hSize * 0.5, hSize * 2, hSize, 0, hSize * 2)
-            ctx.bezierCurveTo(-hSize * 2, hSize, -hSize, -hSize * 0.5, 0, hSize * 0.5)
-            ctx.fill()
-            ctx.stroke()
-            // 加个高光
-            ctx.beginPath()
-            ctx.fillStyle = "rgba(255,255,255,0.4)"
-            ctx.arc(-hSize/2, hSize/2, hSize/4, 0, Math.PI*2)
-            ctx.fill()
-            break
-
-        case "云朵":
-            const cW = shape.size * 0.8
-            const cH = shape.size * 0.5
-            // 简单的云朵：三个圆弧拼接
-            ctx.moveTo(-cW/2, cH/2)
-            ctx.lineTo(cW/2, cH/2)
-            // 右圆
-            ctx.arc(cW/2 - cH/2, 0, cH/2, Math.PI/2, -Math.PI/2, true)
-            // 上圆 (稍微大一点)
-            ctx.arc(0, -cH/2, cH * 0.7, 0, Math.PI, true)
-            // 左圆
-            ctx.arc(-cW/2 + cH/2, 0, cH/2, -Math.PI/2, Math.PI/2, true)
-            ctx.closePath()
-            ctx.fill()
-            ctx.stroke()
-            break
-
-        case "多边形":
-            const sides = shape.polygonSides || 6
-            const pR = shape.size / 2
-            ctx.moveTo(pR * Math.cos(0), pR * Math.sin(0))
-            for (let i = 1; i <= sides; i++) {
-                ctx.lineTo(pR * Math.cos(i * 2 * Math.PI / sides), pR * Math.sin(i * 2 * Math.PI / sides))
             }
             ctx.closePath()
             ctx.fill()
