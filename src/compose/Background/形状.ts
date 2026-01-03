@@ -1,6 +1,11 @@
 import { getCtxSize, random, randomColor } from "./util"
 
-// 绘制形状
+interface 风力 {
+    当前风力: [ number, number ]
+    目标风力: [ number, number ]
+    风力范围: [[ number, number ], [ number, number ]]
+}
+
 interface Shape {
     x: number
     y: number
@@ -9,14 +14,8 @@ interface Shape {
     color: string
     rotation: number
     rotationSpeed: number
-
+    
     个体风力: 风力
-}
-
-interface 风力 {
-    当前风力: [ number, number ]
-    目标风力: [ number, number ]
-    风力范围: [[ number, number ], [ number, number ]]
 }
 
 const shapes: Shape[] = []
@@ -25,8 +24,8 @@ const 全局风力: 风力 = {
     当前风力: [ 0, 0 ],
     目标风力: [ 0, 0 ],
     风力范围: [
-        [ -1, 1 ],
-        [ -1, 1 ]
+        [ -0.5, 1 ],   // X轴范围
+        [ -0, -2 ]   // Y轴范围 (负数向上)
     ]
 }
 
@@ -35,32 +34,27 @@ const lerp = (start: number, end: number, t: number) => {
     return start * (1 - t) + end * t
 }
 
-// 重新随机风力目标
-const randomizeWindTarget = () => {
-    // 之前用了您举例的数值（-1~4, -3~-6），导致速度过快（向上飞出去了）。
-    // 现在调整为更合理的微风范围，保持画面的悠闲感。
-    
-    // X轴风力：-1 到 1 之间随机，表示左右轻微飘动
-    targetWindX = random(-1, 1)
-    
-    // Y轴风力：全局主要负责向上推力（代替基础上升速度）
-    // 负数表示向上。
-    targetWindY = random(-2, -4) 
+const updateWind = (wind: 风力) => {
+    // 缓动更新当前风力
+    wind.当前风力[0] = lerp(wind.当前风力[0], wind.目标风力[0], 0.005)
+    wind.当前风力[1] = lerp(wind.当前风力[1], wind.目标风力[1], 0.005)
+
+    // 检查是否到达目标，如果到达则随机新目标
+    if (Math.abs(wind.当前风力[0] - wind.目标风力[0]) < 0.1 && 
+        Math.abs(wind.当前风力[1] - wind.目标风力[1]) < 0.1) {
+        
+        wind.目标风力[0] = random(wind.风力范围[0][0], wind.风力范围[0][1])
+        wind.目标风力[1] = random(wind.风力范围[1][0], wind.风力范围[1][1])
+    }
 }
 
-// 辅助函数：随机个体风力目标
-const randomizeIndWindTarget = (shape: Shape) => {
-    // 个体风力范围：负责个体的随机运动（代替摇摆）
-    // X轴：左右随机
-    shape.targetIndWindX = random(-0.8, 0.8)
-    // Y轴：微调上下的速度
-    shape.targetIndWindY = random(-0.5, 0.5)
+// 初始化风力目标
+const initWind = (wind: 风力) => {
+    wind.目标风力[0] = random(wind.风力范围[0][0], wind.风力范围[0][1])
+    wind.目标风力[1] = random(wind.风力范围[1][0], wind.风力范围[1][1])
+    wind.当前风力[0] = wind.目标风力[0]
+    wind.当前风力[1] = wind.目标风力[1]
 }
-
-// 初始化风力
-randomizeWindTarget()
-currentWindX = targetWindX
-currentWindY = targetWindY
 
 // 计时器引用，用于清理
 let emitTimer: number | null = null
@@ -72,20 +66,18 @@ export const init形状 = (ctx: CanvasRenderingContext2D) => {
     if (updateTimer) clearInterval(updateTimer)
     shapes.length = 0
 
-    // 初始化风力
-    randomizeWindTarget()
-    currentWindX = targetWindX
-    currentWindY = targetWindY
+    // 重置全局风力
+    initWind(全局风力)
 
     // 启动发射器：每 300ms 发射一个新粒子
     emitTimer = window.setInterval(() => {
         emitShape(ctx)
-    }, 1000)
+    }, 800)
 
     // 启动更新器：每 16ms (约60fps) 更新一次所有粒子位置
     updateTimer = window.setInterval(() => {
         update(ctx)
-    }, 10)
+    }, 15)
 }
 
 // 发射单个粒子
@@ -98,7 +90,7 @@ const emitShape = (ctx: CanvasRenderingContext2D) => {
     const type = ["圆形", "星星"][Math.floor(random(0, 2))] as any
     
     const newShape: Shape = {
-        x: random(0, width),
+        x: random(-100, width),
         y: height + 60, // 从屏幕底部下方发射
         type: type,
         size: random(30, 60),
@@ -110,15 +102,13 @@ const emitShape = (ctx: CanvasRenderingContext2D) => {
             当前风力: [ 0, 0 ],
             目标风力: [ 0, 0 ],
             风力范围: [
-                [ -1, 1 ],
-                [ -1, 1 ]
+                [ -0.8, 0.8 ], // 个体X轴范围
+                [ -0.5, 0.5 ]  // 个体Y轴范围
             ]
         }
     }
     
-    randomizeIndWindTarget(newShape)
-    newShape.indWindX = newShape.targetIndWindX
-    newShape.indWindY = newShape.targetIndWindY
+    initWind(newShape.个体风力)
     
     shapes.push(newShape)
 }
@@ -127,45 +117,24 @@ const emitShape = (ctx: CanvasRenderingContext2D) => {
 const update = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
 
-    // 1. 更新全局风力（缓动逼近目标）
-    // 使用 lerp 进行平滑过渡
-    // 这里的 windChangeSpeed 决定了“慢慢靠近”的速度
-    currentWindX = lerp(currentWindX, targetWindX, windChangeSpeed)
-    currentWindY = lerp(currentWindY, targetWindY, windChangeSpeed)
-
-    // 2. 检查是否到达目标（接近到一定程度），如果到达则随机新的目标
-    if (Math.abs(currentWindX - targetWindX) < 0.1 && Math.abs(currentWindY - targetWindY) < 0.1) {
-        randomizeWindTarget()
-    }
+    // 1. 更新全局风力
+    updateWind(全局风力)
 
     // 倒序遍历以便安全移除
     for (let i = shapes.length - 1; i >= 0; i--) {
         const shape = shapes[i]
         
-        // 更新个体风力（缓动逼近）
-        shape.indWindX = lerp(shape.indWindX, shape.targetIndWindX, windChangeSpeed)
-        shape.indWindY = lerp(shape.indWindY, shape.targetIndWindY, windChangeSpeed)
-        
-        // 检查个体风力是否到达目标
-        if (Math.abs(shape.indWindX - shape.targetIndWindX) < 0.05 && 
-            Math.abs(shape.indWindY - shape.targetIndWindY) < 0.05) {
-            randomizeIndWindTarget(shape)
-        }
+        // 2. 更新个体风力
+        updateWind(shape.个体风力)
 
-        // 更新位置
-        // 粒子的最终位移 = 全局风力(currentWindY) + 个体风力(indWindY)
-        // 移除了基础 speedY，现在完全由风力驱动
-        shape.y += currentWindY // 全局风力 (主要向上推力)
-        shape.y += shape.indWindY // 个体风力 (微调)
-        
-        // X轴
-        // 移除了基础摇摆，现在完全由风力驱动
-        shape.x += currentWindX // 全局风力
-        shape.x += shape.indWindX // 个体风力
+        // 3. 更新位置
+        // 最终位置 += 全局风力 + 个体风力
+        shape.x += 全局风力.当前风力[0] + shape.个体风力.当前风力[0]
+        shape.y += 全局风力.当前风力[1] + shape.个体风力.当前风力[1]
         
         shape.rotation += shape.rotationSpeed
 
-        // 边界检查：如果完全超出屏幕上方，则销毁
+        // 边界检查
         if (shape.y < -100) {
             shapes.splice(i, 1)
             continue
