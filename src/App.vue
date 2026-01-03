@@ -4,6 +4,7 @@ import { onMounted } from "vue"
 import Music from "./compose/Music.vue"
 import Background from "./compose/Background/Background.vue"
 import LiveRoom from "./compose/test/LiveRoom.vue"
+import LiveRoomMD3 from "./compose/test1/LiveRoomMD3.vue"
 
 onMounted(() => {
     if (import.meta.env.DEV) {
@@ -32,6 +33,7 @@ onMounted(() => {
         <Music />
     </main> -->
     <LiveRoom />
+    <LiveRoomMD3/>
 </template>
 
 <style scoped>
