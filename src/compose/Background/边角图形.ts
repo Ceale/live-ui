@@ -312,7 +312,7 @@ const drawPattern = (ctx: CanvasRenderingContext2D, data: AAA) => {
 const 周角 = 2 * Math.PI
 const 十分之一度 = 2 * Math.PI / 3600
 
-let ddeegg = 0
+// let ddeegg = 0
 
 export const draw边角图形 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
