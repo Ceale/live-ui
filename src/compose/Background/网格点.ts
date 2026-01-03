@@ -8,6 +8,11 @@ const 显示边界 = false
 type PatternType = '圆' | '三角形' | '五角星' | '内凹四曲线' | '爱心' | '线'
 const PATTERN_TYPES: PatternType[] = ['圆', '三角形', '五角星', '内凹四曲线', '爱心', '线']
 
+// 常量定义 (提取出来以便共享)
+const MAX_SHAPE_SIZE = 40 // 增大最大尺寸
+const MIN_SHAPE_SIZE = 6 
+const NORMAL_MAX_SIZE = 28 // 正常尺寸上限 (超过此值开始透明)
+
 // 区域定义
 interface Zone {
     // 判断点是否在区域内
@@ -92,7 +97,7 @@ export const init网格点 = (ctx: CanvasRenderingContext2D) => {
         const nx = -B / len
         const ny = A / len
         const offset = 100
-
+        
         currentZones.push({
             name: 'Base 1 (2-part)',
             type: patterns[0],
@@ -333,9 +338,6 @@ export const draw网格点 = (ctx: CanvasRenderingContext2D) => {
 
     // 网格设置
     const GRID_SIZE = 26 
-    const MAX_SHAPE_SIZE = 40 // 增大最大尺寸
-    const NORMAL_MAX_SIZE = 28 // 正常尺寸上限 (超过此值开始透明)
-    const MIN_SHAPE_SIZE = 6 
 
     ctx.fillStyle = patternColor
     ctx.strokeStyle = patternColor
@@ -411,6 +413,14 @@ const drawShape = (ctx: CanvasRenderingContext2D, cx: number, cy: number, type: 
              ctx.bezierCurveTo(cx - r, cy - r, cx - r, cy - r/2, cx, cy + r/2)
              ctx.fill(); break
         case '线':
-             ctx.moveTo(cx - r, cy + r); ctx.lineTo(cx + r, cy - r); ctx.stroke(); break
+             // 粗细渐变: 1px -> 2.5px
+             const widthProgress = (size - MIN_SHAPE_SIZE) / (MAX_SHAPE_SIZE - MIN_SHAPE_SIZE)
+             // Clamp 0-1 just in case
+             const safeProgress = Math.max(0, Math.min(1, widthProgress))
+             ctx.lineWidth = 1 + safeProgress * 1.5 
+             
+             ctx.moveTo(cx - r, cy + r); ctx.lineTo(cx + r, cy - r); ctx.stroke(); 
+             ctx.lineWidth = 1 // Restore
+             break
     }
 }
