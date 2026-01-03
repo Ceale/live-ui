@@ -3,6 +3,7 @@ import { css } from "@ceale/util"
 import { onMounted } from "vue"
 import Music from "./compose/Music.vue"
 import Background from "./compose/Background/Background.vue"
+import LiveRoom from "./compose/test/LiveRoom.vue"
 
 onMounted(() => {
     if (import.meta.env.DEV) {
@@ -26,10 +27,11 @@ onMounted(() => {
 </script>
 
 <template>
-    <main>
+    <!-- <main>
         <Background />
         <Music />
-    </main>
+    </main> -->
+    <LiveRoom />
 </template>
 
 <style scoped>
