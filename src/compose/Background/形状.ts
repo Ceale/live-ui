@@ -1,8 +1,5 @@
 import { getCtxSize, random, randomColor } from "./util"
 
-const strokeColor = "#4A4A4A" // 粗描边颜色
-const strokeWidth = 2 // 描边宽度稍微细一点，适应小图形
-
 // 绘制形状
 interface Shape {
     x: number
@@ -27,7 +24,6 @@ let windTime = 0
 
 export const init形状 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
-    shapes.length = 0 // Clear existing
     const count = 35 // 数量稍微减少一点点，因为图形变大了，避免太拥挤
     for (let i = 0; i < count; i++) {
         resetShape(ctx, {} as Shape, true) // 初始化，强制在底部下方
@@ -89,7 +85,7 @@ export const draw形状 = (ctx: CanvasRenderingContext2D) => {
         if (shape.y < -50) {
             resetShape(ctx, shape)
         }
-        
+    
         // 左右边界检查：如果飘出去了，从另一边回来，或者重置？
         // 既然是粒子发射，飘出左右边界不太常见，除非幅度很大。
         // 这里做一个简单的 wrap 处理，或者让它继续飘直到超出上方
@@ -105,11 +101,7 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
     ctx.save()
     ctx.translate(shape.x, shape.y)
     ctx.rotate(shape.rotation)
-    ctx.lineWidth = strokeWidth
-    ctx.strokeStyle = strokeColor
     ctx.fillStyle = shape.color
-    ctx.lineCap = "round"
-    ctx.lineJoin = "round"
 
     ctx.beginPath()
     
@@ -118,7 +110,6 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
             // 小圆点/泡泡
             ctx.arc(0, 0, shape.size / 2, 0, Math.PI * 2)
             ctx.fill()
-            ctx.stroke()
             // 加个高光让它像泡泡
             ctx.beginPath()
             ctx.fillStyle = "rgba(255,255,255,0.6)"
@@ -145,7 +136,6 @@ const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
             }
             ctx.closePath()
             ctx.fill()
-            ctx.stroke()
             break
     }
     
