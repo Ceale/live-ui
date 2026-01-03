@@ -39,6 +39,6 @@ main {
     height: 1080px;
     transform-origin: top left;
     /* background-color: #fff9f3; */
-    background-image: url("./assets/bg.png");
+    /* background-image: url("./assets/bg.png"); */
 }
 </style>

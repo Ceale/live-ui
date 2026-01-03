@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue"
+import { reactive, ref } from "vue"
 
 if (window.location.hash.includes("round")) {
     document.documentElement.classList.add("round")
@@ -27,9 +27,9 @@ const duration = ref<number>(0)
 const progress = ref<number>(0)
 const lyricLineText = ref("")
 
-const cover = ref<string[]>([])
+const cover = reactive<string[]>([])
 
-const connect = new EventSource("http://localhost:23330/subscribe-player-status")
+const connect = new EventSource("http://localhost:23330/subscribe-player-status?filter=status,name,singer,albumName,lyricLineText,duration,progress,playbackRate,picUrl")
 
 connect.addEventListener("name", (event) => {
     name.value = JSON.parse(event.data)
@@ -48,10 +48,10 @@ connect.addEventListener("picUrl", (event) => {
     const img = new Image()
     img.src = url
     img.onload = () => {
-        cover.value.push(url)
-        if (cover.value.length > 1) {
+        cover.push(url)
+        if (cover.length > 1) {
             setTimeout(() => {
-                cover.value.shift()
+                cover.shift()
             }, 1750)
         }
     }
@@ -62,28 +62,38 @@ connect.addEventListener("lyricLineText", (event) => {
 </script>
 
 <template>
-    <div id="cover">
-        <div class="clip" v-for="img in cover">
-            <img :src="img">
-        </div>
-    </div>
-    <div id="info">
-        <div class="text">
-            <p id="description">
-                <span class="name">{{ name }}</span>
-                <div id="dot"></div>
-                <span class="author">{{ singer }}</span>
-            </p>
-        </div>
-        <div class="bar">
-            <div id="progress-bar">
-                <div class="progress" :style="{width: progress/duration*100+'%'}"></div>
+    <section>
+        <div id="cover">
+            <div class="clip" v-for="img in cover">
+                <img :src="img">
             </div>
         </div>
-    </div>
+        <div id="info">
+            <div class="text">
+                <p id="description">
+                    <span class="name">{{ name }}</span>
+                    <div id="dot"></div>
+                    <span class="author">{{ singer }}</span>
+                </p>
+            </div>
+            <div class="bar">
+                <div id="progress-bar">
+                    <div class="progress" :style="{width: progress/duration*100+'%'}"></div>
+                </div>
+            </div>
+        </div>
+    </section>
 </template>
 
 <style scoped>
+section {
+    backdrop-filter: blur(25px);
+    position: absolute;
+    bottom: 100px;
+    left: 50px;
+    width: 100%;
+}
+
 #cover {
     height: 85px;
     width: 85px;
