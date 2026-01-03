@@ -14,6 +14,12 @@ interface Shape {
     swaySpeed: number  // 左右摇摆的速度
     swayAmp: number    // 左右摇摆的幅度
     polygonSides?: number // 多边形的边数（如果是 polygon 类型）
+
+    // 个体风力属性
+    indWindX: number
+    indWindY: number
+    targetIndWindX: number
+    targetIndWindY: number
 }
 
 const shapes: Shape[] = []
@@ -40,8 +46,14 @@ const randomizeWindTarget = () => {
     targetWindX = random(-1, 1)
     
     // Y轴风力：-0.5 到 0.5 之间随机，表示垂直方向的气流波动
-    // 负数会加速向上，正数会减缓上升（阻力）
     targetWindY = random(-0.5, 0.5)
+}
+
+// 辅助函数：随机个体风力目标
+const randomizeIndWindTarget = (shape: Shape) => {
+    // 个体风力范围稍微小一点，作为微调
+    shape.targetIndWindX = random(-0.5, 0.5)
+    shape.targetIndWindY = random(-0.3, 0.3)
 }
 
 // 初始化风力
@@ -96,8 +108,18 @@ const emitShape = (ctx: CanvasRenderingContext2D) => {
         swayOffset: random(0, Math.PI * 2),
         swaySpeed: random(0.005, 0.02),
         swayAmp: random(0.5, 1.5),
-        polygonSides: undefined 
+        polygonSides: undefined,
+        
+        // 初始化个体风力
+        indWindX: 0,
+        indWindY: 0,
+        targetIndWindX: 0,
+        targetIndWindY: 0
     }
+    
+    randomizeIndWindTarget(newShape)
+    newShape.indWindX = newShape.targetIndWindX
+    newShape.indWindY = newShape.targetIndWindY
     
     shapes.push(newShape)
 }
@@ -121,19 +143,26 @@ const updateShapes = (ctx: CanvasRenderingContext2D) => {
     for (let i = shapes.length - 1; i >= 0; i--) {
         const shape = shapes[i]
         
+        // 更新个体风力（缓动逼近）
+        shape.indWindX = lerp(shape.indWindX, shape.targetIndWindX, windChangeSpeed)
+        shape.indWindY = lerp(shape.indWindY, shape.targetIndWindY, windChangeSpeed)
+        
+        // 检查个体风力是否到达目标
+        if (Math.abs(shape.indWindX - shape.targetIndWindX) < 0.05 && 
+            Math.abs(shape.indWindY - shape.targetIndWindY) < 0.05) {
+            randomizeIndWindTarget(shape)
+        }
+
         // 更新位置
-        // 粒子的最终位移 = 基础上升速度(speedY) + 全局风力(currentWindY)
-        // 注意：基础 speedY 是正数，逻辑是 y -= speedY。
-        // 风力 currentWindY 是负数（向上），如果直接加到坐标上应该是 y += currentWindY。
-        // 为了统一，我们让 y += (向上风力 + 基础向上速度的负值)
-        // 但简单点写：
+        // 粒子的最终位移 = 基础上升速度(speedY) + 全局风力(currentWindY) + 个体风力(indWindY)
         shape.y -= shape.speedY // 基础向上
-        shape.y += currentWindY // 风力叠加（currentWindY是负数，所以是加速向上）
+        shape.y += currentWindY // 全局风力
+        shape.y += shape.indWindY // 个体风力
         
         // X轴
         shape.swayOffset += shape.swaySpeed
         const individualSway = Math.sin(shape.swayOffset) * shape.swayAmp
-        shape.x += individualSway + currentWindX
+        shape.x += individualSway + currentWindX + shape.indWindX
         
         shape.rotation += shape.rotationSpeed
 
