@@ -83,9 +83,6 @@ export const init形状 = (ctx: CanvasRenderingContext2D) => {
 // 发射单个粒子
 const emitShape = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
-    
-    // 如果粒子太多，暂时停止发射，防止内存溢出或卡顿
-    if (shapes.length > 100) return 
 
     const type = ["圆形", "星星", "花朵", "雪花", "小兔", "茶杯"][Math.floor(random(0, 6))] as any
     
