@@ -31,7 +31,6 @@ export const draw背景图形 = (ctx: CanvasRenderingContext2D) => {
         ctx.arc(dec.x, dec.y, dec.size, 0, Math.PI*2)
         ctx.fill()
     })
-    ctx.globalAlpha = 1.0
 
     ctx.restore()
 }

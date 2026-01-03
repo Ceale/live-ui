@@ -66,7 +66,7 @@ let data!: CornerState
 export const init边角图形 = () => {
     const [ c1, c2 ] = randomHarmoniousColors()
     const [ t1, t2 ] = [ randomType(), randomType() ]
-    const [ s1, s2 ] = [ random(0.3, 1.5), random(0.3, 1.5) ]
+    const [ s1, s2 ] = [ random(0.3, 1.3), random(0.3, 1.3) ]
     data = {
         direction: Math.random() > 0.5 ? "↖" : "↗",
         shapeTopLg: {

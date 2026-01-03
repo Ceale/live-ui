@@ -18,10 +18,6 @@ interface Shape {
 
 const shapes: Shape[] = []
 
-// 全局风力参数
-let globalWind = 0
-let windTime = 0
-
 // 计时器引用，用于清理
 let emitTimer: number | null = null
 let updateTimer: number | null = null
@@ -34,7 +30,7 @@ export const init形状 = (ctx: CanvasRenderingContext2D) => {
 
     // 启动发射器：每 300ms 发射一个新粒子
     emitTimer = window.setInterval(() => {
-        emitShape(ctx)
+        newShape(ctx)
     }, 300)
 
     // 启动更新器：每 16ms (约60fps) 更新一次所有粒子位置
@@ -44,19 +40,16 @@ export const init形状 = (ctx: CanvasRenderingContext2D) => {
 }
 
 // 发射单个粒子
-const emitShape = (ctx: CanvasRenderingContext2D) => {
+const newShape = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
-    
-    // 如果粒子太多，暂时停止发射，防止内存溢出或卡顿
-    if (shapes.length > 100) return 
 
     const type = ["圆形", "星星"][Math.floor(random(0, 2))] as any
     
     const newShape: Shape = {
-        x: random(0, width),
+        x: random(-50, width),
         y: height + 60, // 从屏幕底部下方发射
         type: type,
-        size: random(30, 60),
+        size: random(35, 50),
         color: randomColor(),
         rotation: random(0, Math.PI * 2),
         speedY: random(0.3, 1.0),
@@ -69,6 +62,11 @@ const emitShape = (ctx: CanvasRenderingContext2D) => {
     
     shapes.push(newShape)
 }
+
+
+// 全局风力参数
+let globalWind = 0
+let windTime = 0
 
 // 更新所有粒子状态
 const updateShapes = (ctx: CanvasRenderingContext2D) => {
@@ -92,19 +90,7 @@ const updateShapes = (ctx: CanvasRenderingContext2D) => {
         shape.rotation += shape.rotationSpeed
 
         // 边界检查：如果完全超出屏幕上方，则销毁
-        if (shape.y < -100) {
-            shapes.splice(i, 1)
-            continue
-        }
-        
-        // 左右边界检查：保持 wrap 效果，或者也可以选择销毁
-        // 这里为了视觉连续性，保持 wrap 效果比较好，或者让它自然飘出去销毁也可以
-        // 既然要求是“超出边界后销毁”，那我们严格执行销毁逻辑？
-        // 但考虑到左右风力，wrap 可能更好看。不过根据用户指令“超出边界后销毁”，
-        // 我们可以定义为：超出上方销毁。左右如果飘出去了，为了不让屏幕空荡荡，通常做法是 wrap。
-        // 但如果严格执行“超出边界销毁”，那左右飘出也应该销毁。
-        // 这里我采取折中方案：上方超出必定销毁。左右超出如果太远也销毁。
-        if (shape.x < -150 || shape.x > width + 150) {
+        if (shape.y < -100 || shape.x < -150 || shape.x > width + 150) {
             shapes.splice(i, 1)
         }
     }
@@ -113,52 +99,48 @@ const updateShapes = (ctx: CanvasRenderingContext2D) => {
 // 只负责绘制
 export const draw形状 = (ctx: CanvasRenderingContext2D) => {
     shapes.forEach(shape => {
-        drawSingleShape(ctx, shape)
+        ctx.save()
+        ctx.translate(shape.x, shape.y)
+        ctx.rotate(shape.rotation)
+        ctx.fillStyle = shape.color
+        ctx.globalAlpha = 0.5
+
+        ctx.beginPath()
+
+        switch (shape.type) {
+            case "圆形":
+                // 小圆点/泡泡
+                ctx.arc(0, 0, shape.size / 2, 0, Math.PI * 2)
+                ctx.fill()
+                // 加个高光让它像泡泡
+                ctx.beginPath()
+                ctx.fillStyle = "rgba(255,255,255,0.6)"
+                ctx.arc(-shape.size / 6, -shape.size / 6, shape.size / 8, 0, Math.PI * 2)
+                ctx.fill()
+                break
+
+            case "星星":
+                // 圆角四角星
+                const r = shape.size / 2
+                const inset = 0.45
+                ctx.moveTo(0, -r)
+                for (let i = 0; i < 8; i++) {
+                    const angle = ((i + 1) * Math.PI) / 4 - Math.PI / 2
+                    const radius = (i % 2 === 0) ? r * inset : r
+                    // 使用简单的直线连接，保持几何感但因为size变大，圆角会显得太圆，
+                    // 这里我们做微小的圆角处理
+                    const nextAngle = ((i + 2) * Math.PI) / 4 - Math.PI / 2
+                    const nextRadius = ((i + 1) % 2 === 0) ? r * inset : r
+
+                    // 简单的圆角星：在顶点处使用 arcTo 或者贝塞尔
+                    // 这里为了保持风格统一，还是用简单的直线，但是可以通过 lineJoin="round" (已设置) 来获得圆角
+                    ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius)
+                }
+                ctx.closePath()
+                ctx.fill()
+                break
+        }
+
+        ctx.restore()
     })
-}
-
-const drawSingleShape = (ctx: CanvasRenderingContext2D, shape: Shape) => {
-    
-    ctx.save()
-    ctx.translate(shape.x, shape.y)
-    ctx.rotate(shape.rotation)
-    ctx.fillStyle = shape.color
-
-    ctx.beginPath()
-    
-    switch (shape.type) {
-        case "圆形":
-            // 小圆点/泡泡
-            ctx.arc(0, 0, shape.size / 2, 0, Math.PI * 2)
-            ctx.fill()
-            // 加个高光让它像泡泡
-            ctx.beginPath()
-            ctx.fillStyle = "rgba(255,255,255,0.6)"
-            ctx.arc(-shape.size/6, -shape.size/6, shape.size/8, 0, Math.PI*2)
-            ctx.fill()
-            break
-            
-        case "星星":
-            // 圆角四角星
-            const r = shape.size / 2
-            const inset = 0.45
-            ctx.moveTo(0, -r)
-            for (let i = 0; i < 8; i++) {
-                const angle = ((i + 1) * Math.PI) / 4 - Math.PI / 2
-                const radius = (i % 2 === 0) ? r * inset : r
-                // 使用简单的直线连接，保持几何感但因为size变大，圆角会显得太圆，
-                // 这里我们做微小的圆角处理
-                const nextAngle = ((i + 2) * Math.PI) / 4 - Math.PI / 2
-                const nextRadius = ((i + 1) % 2 === 0) ? r * inset : r
-                
-                // 简单的圆角星：在顶点处使用 arcTo 或者贝塞尔
-                // 这里为了保持风格统一，还是用简单的直线，但是可以通过 lineJoin="round" (已设置) 来获得圆角
-                ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius)
-            }
-            ctx.closePath()
-            ctx.fill()
-            break
-    }
-    
-    ctx.restore()
 }
