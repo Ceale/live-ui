@@ -21,6 +21,10 @@ interface Shape {
 
 const shapes: Shape[] = []
 
+// 全局风力参数
+let globalWind = 0
+let windTime = 0
+
 export const init形状 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
     shapes.length = 0 // Clear existing
@@ -61,13 +65,23 @@ const resetShape = (ctx: CanvasRenderingContext2D, shape: Shape, isInit = false)
 
 export const draw形状 = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
+    
+    // 更新全局风力：平稳的微风
+    windTime += 0.002 // 变化非常缓慢
+    // 持续向一个方向（向右）吹拂，避免左右来回摆动
+    // 基础风力 0.4，叠加微弱的波动，保持风向一致
+    globalWind = 0.4 + Math.sin(windTime) * 0.2
+    
     shapes.forEach(shape => {
         // 更新位置
         shape.y -= shape.speedY // 向上运动
         
-        // 左右摇摆
+        // 左右摇摆：个体摇摆 + 全局风力
         shape.swayOffset += shape.swaySpeed
-        shape.x += Math.sin(shape.swayOffset) * shape.swayAmp
+        // 个体摇摆
+        const individualSway = Math.sin(shape.swayOffset) * shape.swayAmp
+        // 最终 X 轴位移
+        shape.x += individualSway + globalWind
         
         shape.rotation += shape.rotationSpeed
 
