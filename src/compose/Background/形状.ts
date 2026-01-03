@@ -8,29 +8,27 @@ interface Shape {
     size: number
     color: string
     rotation: number
-    speedY: number     // 上升速度
     rotationSpeed: number
-    swayOffset: number // 左右摇摆的相位偏移
-    swaySpeed: number  // 左右摇摆的速度
-    swayAmp: number    // 左右摇摆的幅度
-    polygonSides?: number // 多边形的边数（如果是 polygon 类型）
 
-    // 个体风力属性
-    indWindX: number
-    indWindY: number
-    targetIndWindX: number
-    targetIndWindY: number
+    个体风力: 风力
+}
+
+interface 风力 {
+    当前风力: [ number, number ]
+    目标风力: [ number, number ]
+    风力范围: [[ number, number ], [ number, number ]]
 }
 
 const shapes: Shape[] = []
 
-// 全局风力参数
-let currentWindX = 0
-let currentWindY = 0
-let targetWindX = 0
-let targetWindY = 0
-let windChangeSpeed = 0.005 // 缓动系数，控制风力变化速度
-const windCheckInterval = 200 // 每隔多少帧检查是否达到目标风力（或者直接判断接近程度）
+const 全局风力: 风力 = {
+    当前风力: [ 0, 0 ],
+    目标风力: [ 0, 0 ],
+    风力范围: [
+        [ -1, 1 ],
+        [ -1, 1 ]
+    ]
+}
 
 // 辅助函数：缓动逼近
 const lerp = (start: number, end: number, t: number) => {
@@ -45,15 +43,18 @@ const randomizeWindTarget = () => {
     // X轴风力：-1 到 1 之间随机，表示左右轻微飘动
     targetWindX = random(-1, 1)
     
-    // Y轴风力：-0.5 到 0.5 之间随机，表示垂直方向的气流波动
-    targetWindY = random(-0.5, 0.5)
+    // Y轴风力：全局主要负责向上推力（代替基础上升速度）
+    // 负数表示向上。
+    targetWindY = random(-2, -4) 
 }
 
 // 辅助函数：随机个体风力目标
 const randomizeIndWindTarget = (shape: Shape) => {
-    // 个体风力范围稍微小一点，作为微调
-    shape.targetIndWindX = random(-0.5, 0.5)
-    shape.targetIndWindY = random(-0.3, 0.3)
+    // 个体风力范围：负责个体的随机运动（代替摇摆）
+    // X轴：左右随机
+    shape.targetIndWindX = random(-0.8, 0.8)
+    // Y轴：微调上下的速度
+    shape.targetIndWindY = random(-0.5, 0.5)
 }
 
 // 初始化风力
@@ -79,12 +80,12 @@ export const init形状 = (ctx: CanvasRenderingContext2D) => {
     // 启动发射器：每 300ms 发射一个新粒子
     emitTimer = window.setInterval(() => {
         emitShape(ctx)
-    }, 300)
+    }, 1000)
 
     // 启动更新器：每 16ms (约60fps) 更新一次所有粒子位置
     updateTimer = window.setInterval(() => {
-        updateShapes(ctx)
-    }, 16)
+        update(ctx)
+    }, 10)
 }
 
 // 发射单个粒子
@@ -103,18 +104,16 @@ const emitShape = (ctx: CanvasRenderingContext2D) => {
         size: random(30, 60),
         color: randomColor(),
         rotation: random(0, Math.PI * 2),
-        speedY: random(0.3, 1.0), // 粒子的基础上升速度（依然保留一点个体差异）
         rotationSpeed: random(-0.015, 0.015),
-        swayOffset: random(0, Math.PI * 2),
-        swaySpeed: random(0.005, 0.02),
-        swayAmp: random(0.5, 1.5),
-        polygonSides: undefined,
         
-        // 初始化个体风力
-        indWindX: 0,
-        indWindY: 0,
-        targetIndWindX: 0,
-        targetIndWindY: 0
+        个体风力: {
+            当前风力: [ 0, 0 ],
+            目标风力: [ 0, 0 ],
+            风力范围: [
+                [ -1, 1 ],
+                [ -1, 1 ]
+            ]
+        }
     }
     
     randomizeIndWindTarget(newShape)
@@ -125,7 +124,7 @@ const emitShape = (ctx: CanvasRenderingContext2D) => {
 }
 
 // 更新所有粒子状态
-const updateShapes = (ctx: CanvasRenderingContext2D) => {
+const update = (ctx: CanvasRenderingContext2D) => {
     const [ width, height ] = getCtxSize(ctx)
 
     // 1. 更新全局风力（缓动逼近目标）
@@ -154,15 +153,15 @@ const updateShapes = (ctx: CanvasRenderingContext2D) => {
         }
 
         // 更新位置
-        // 粒子的最终位移 = 基础上升速度(speedY) + 全局风力(currentWindY) + 个体风力(indWindY)
-        shape.y -= shape.speedY // 基础向上
-        shape.y += currentWindY // 全局风力
-        shape.y += shape.indWindY // 个体风力
+        // 粒子的最终位移 = 全局风力(currentWindY) + 个体风力(indWindY)
+        // 移除了基础 speedY，现在完全由风力驱动
+        shape.y += currentWindY // 全局风力 (主要向上推力)
+        shape.y += shape.indWindY // 个体风力 (微调)
         
         // X轴
-        shape.swayOffset += shape.swaySpeed
-        const individualSway = Math.sin(shape.swayOffset) * shape.swayAmp
-        shape.x += individualSway + currentWindX + shape.indWindX
+        // 移除了基础摇摆，现在完全由风力驱动
+        shape.x += currentWindX // 全局风力
+        shape.x += shape.indWindX // 个体风力
         
         shape.rotation += shape.rotationSpeed
 
