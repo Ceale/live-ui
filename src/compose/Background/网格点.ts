@@ -218,7 +218,7 @@ const createLinearGradientScale = (w: number, h: number, angle: number) => {
 
 // 绘制网格点背景 (Halftone Pattern)
 export const draw网格点 = (ctx: CanvasRenderingContext2D) => {
-    const patternColor = "rgba(74, 74, 74, 0.05)"
+    const patternColor = "rgba(72, 72, 72, 0.05)"
     const [ width, height ] = getCtxSize(ctx)
     
     // 如果没有初始化过，或者尺寸发生剧烈变化（可选），初始化一次

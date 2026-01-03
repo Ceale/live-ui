@@ -25,8 +25,8 @@ const initList: ctxFunc[] = [
 const drawList: ctxFunc[] = [
     draw背景,
     draw边角图形,
-    draw背景图形,
     draw网格点,
+    draw背景图形,
     draw形状,
 ]
 
