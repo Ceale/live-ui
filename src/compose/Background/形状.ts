@@ -31,7 +31,7 @@ export const init形状 = (ctx: CanvasRenderingContext2D) => {
     // 启动发射器：每 300ms 发射一个新粒子
     emitTimer = window.setInterval(() => {
         newShape(ctx)
-    }, 300)
+    }, 1000)
 
     // 启动更新器：每 16ms (约60fps) 更新一次所有粒子位置
     updateTimer = window.setInterval(() => {
